@@ -4,6 +4,7 @@
 #include "structs.h"
 #include "subs.hpp"
 #include "global.h"
+#include "output.hpp"
 #include <vector>
 #include <algorithm>
 #include <tuple>
