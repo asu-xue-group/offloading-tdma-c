@@ -4,51 +4,35 @@
 #include "structs.h"
 #include "subs.hpp"
 #include "knapsack.hpp"
+#include "output.hpp"
 #include <vector>
-#include <array>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
 
-#ifdef __linux__
-#include "sys/types.h"
-#include "sys/sysinfo.h"
-#elif _WIN32
-
-#include "windows.h"
-#include "output.hpp"
-
-#endif
 
 namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
 OPT *opt;
 std::vector<std::vector<double>> distance;
-int K, M, N, T;
+int K, M, N;
 long table_size;
 
 
 int main(int argc, char **argv) {
-#ifdef __linux__
-    struct sysinfo memInfo{};
-    sysinfo (&memInfo);
-#elif _WIN32
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-    GlobalMemoryStatusEx(&memInfo);
-#endif
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     FILE *fp1;         // input file
     int returnV, flag;
 
     // Check commandline arguments
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <ifile> <flag> <T>\n", argv[0]);
+    if (argc < 4) {
+        fprintf(stderr, "Usage: %s <ifile> <flag> <T> <t0>\n", argv[0]);
         exit(1);
     }
     flag = std::stoi(argv[2]);
     T = std::stoi(argv[3]);
+    total = std::stof(argv[4]);
 
     fp1 = fopen(argv[1], "r");
     if (!fp1) {
@@ -61,9 +45,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "wrong input\n");
         exit(0);
     }
-//    fprintf(stdout, "K=%d, M=%d, N=%d\n", K, M, N);
-//    fprintf(stdout, "sizeof(OPT)=%d\n", sizeof(OPT));
-    std::cout << "Running test case " << argv[1] << " with flag " << flag << std::endl;
+
+    std::cout << std::format("Running test case {} with flag {}, T={}, t0={}\n",
+                             argv[1], flag, T, total) << std::endl;
 
     
     s = (SERVER *) calloc(M + 1, sizeof(SERVER));
@@ -153,15 +137,7 @@ int main(int argc, char **argv) {
     std::reverse(solution.begin(), solution.end());
 
     auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
-    double total_mem = 0.0;
 
-#ifdef __linux__
-    long long mem_bit = memInfo.totalram;
-    total_mem = mem_bit / std::pow(1024.0, 3) / 8.0;
-#elif _WIN32
-    DWORDLONG mem_bit = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
-    total_mem = mem_bit / 8000000000.0;
-#endif
     fs::path p = argv[1];
     std::string mode_str = "original";
     if (flag == 1) {
@@ -170,15 +146,14 @@ int main(int argc, char **argv) {
         mode_str = "restricted";
     }
     auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}.txt", mode_str, T, lambda);
-    print_to_file(out_path.string(), solution, max_reward, time_delta, total_mem);
+    print_to_file(out_path.string(), solution, max_reward, time_delta);
+
+    std::cout << "Time taken: " << time_delta << " seconds\n";
+    std::cout << "Table size: " << table_size << std::endl;
 
     free(s);
     free(u);
     free(opt);
-
-    std::cout << "Finished. Memory used: " << total_mem << " MB\n";
-    std::cout << "Time taken: " << time_delta << " seconds\n";
-    std::cout << "Table size: " << table_size << std::endl;
 
     return 0;
 }

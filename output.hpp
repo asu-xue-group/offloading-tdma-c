@@ -6,7 +6,7 @@
 #include <string>
 
 void print_to_file(const std::string &filename, const std::vector<std::vector<int>> &solution, int optimal,
-                   double time, double mem_used) {
+                   double time) {
     FILE *fp = fopen(filename.c_str(), "w");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.c_str());
@@ -25,7 +25,6 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
         }
     }
     fprintf(fp, "Time taken: %.4f seconds\n", time);
-    fprintf(fp, "Memory used: %.2f MB\n", mem_used);
 
     fclose(fp);
 }

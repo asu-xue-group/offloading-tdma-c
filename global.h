@@ -8,5 +8,6 @@ double bandwidth = 40.0;
 float total = 10.0;
 double Pmax = 10.0;
 int lambda = 5;
+int T = 10;
 
 #endif
