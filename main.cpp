@@ -29,7 +29,7 @@ int K, M, N, T;
 
 int main(int argc, char **argv) {
 #ifdef __linux__
-    struct sysinfo memInfo;
+    struct sysinfo memInfo{};
     sysinfo (&memInfo);
 #elif _WIN32
     MEMORYSTATUSEX memInfo;
@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s <ifile> <flag> <T>\n", argv[0]);
         exit(1);
     }
-    flag = atoi(argv[2]);
-    T = atoi(argv[3]);
+    flag = std::stoi(argv[2]);
+    T = std::stoi(argv[3]);
 
     fp1 = fopen(argv[1], "r");
     if (!fp1) {
@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
 //    fprintf(stdout, "sizeof(OPT)=%d\n", sizeof(OPT));
     std::cout << "Running test case " << argv[1] << " with flag " << flag << std::endl;
 
+    
     s = (SERVER *) calloc(M + 1, sizeof(SERVER));
     u = (USER *) calloc(N + 1, sizeof(USER));
 
@@ -97,6 +98,7 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%d", &u[n].tier[2].reward);
         fscanf(fp1, "%f", &u[n].tier[2].time);
     }
+    fclose(fp1);
 //    fprintf(stdout, "users read in\n");
 
     // Pre-calculate the distance between servers and users
@@ -156,8 +158,8 @@ int main(int argc, char **argv) {
     auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
     double total_mem = 0.0;
 #ifdef __linux__
-    long long mem_byte = memInfo.totalram;
-    total_mem = mem_byte / 1000000.0;
+    long long mem_bit = memInfo.totalram;
+    total_mem = mem_bit / std::pow(1024.0, 3);
 #elif _WIN32
     DWORDLONG mem_bit = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
     total_mem = mem_bit / 8000000000.0;
