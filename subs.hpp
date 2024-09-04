@@ -6,9 +6,8 @@
 #include <cmath>
 #include <tuple>
 
-
-extern SERVER *s;
-extern USER *u;
+extern std::vector<SERVER*> s;
+extern std::vector<USER*> u;
 extern int K, M, N, T;
 
 long indexue(int n, int t, const int *C, const int *R, int mode) {
@@ -17,8 +16,8 @@ long indexue(int n, int t, const int *C, const int *R, int mode) {
 
     if (mode == 0) {
         for (int m = 1; m <= M; m++) {
-            multiplier = multiplier * (1 + s[m].cpu);
-            multiplier = multiplier * (1 + s[m].ram);
+            multiplier = multiplier * (1 + s.at(m)->cpu);
+            multiplier = multiplier * (1 + s.at(m)->ram);
         }
     } else {
         for (int m = 1; m <= M; m++) {
@@ -33,9 +32,9 @@ long indexue(int n, int t, const int *C, const int *R, int mode) {
 
     if (mode == 0) {
         for (int m = 1; m <= M; m++) {
-            multiplier /= (1 + s[m].cpu);
+            multiplier /= (1 + s.at(m)->cpu);
             temp += C[m] * multiplier;
-            multiplier /= (1 + s[m].ram);
+            multiplier /= (1 + s.at(m)->ram);
             temp += R[m] * multiplier;
         }
     } else {
@@ -55,19 +54,19 @@ double calc_distance(float x1, float y1, float x2, float y2) {
 }
 
 double snr(int m, int n) {
-    return Pmax / (noise * std::pow(s[m].distance[n], alpha));
+    return Pmax / (noise * std::pow(s.at(m)->distance->at(n), alpha));
 }
 
 void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     if (mode == 0) {
-        combo[2 * m - 1] -= u[n].tier[k].cpu;
-        combo[2 * m] -= u[n].tier[k].ram;
+        combo[2 * m - 1] -= u.at(n)->tier->at(k)->cpu;
+        combo[2 * m] -= u.at(n)->tier->at(k)->ram;
     } else if (mode == 1) {
-        combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
-        combo[2 * m] -= static_cast<int>(std::floor(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+        combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u.at(n)->tier->at(k)->cpu / static_cast<double>(s.at(m)->cpu)));
+        combo[2 * m] -= static_cast<int>(std::floor(lambda * u.at(n)->tier->at(k)->ram / static_cast<double>(s.at(m)->ram)));
     } else if (mode == -1) {
-        combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
-        combo[2 * m] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+        combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u.at(n)->tier->at(k)->cpu / static_cast<double>(s.at(m)->cpu)));
+        combo[2 * m] -= static_cast<int>(std::ceil(lambda * u.at(n)->tier->at(k)->ram / static_cast<double>(s.at(m)->ram)));
     }
 }
 

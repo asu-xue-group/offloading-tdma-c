@@ -21,9 +21,9 @@
 #endif
 
 namespace fs = std::filesystem;
-SERVER *s;
-USER *u;
-OPT *opt;
+std::vector<SERVER*> s;
+std::vector<USER*> u;
+std::vector<OPT*> opt;
 int K, M, N, T;
 
 
@@ -65,38 +65,59 @@ int main(int argc, char **argv) {
 //    fprintf(stdout, "sizeof(OPT)=%d\n", sizeof(OPT));
     std::cout << "Running test case " << argv[1] << " with flag " << flag << std::endl;
 
-    
-    s = (SERVER *) calloc(M + 1, sizeof(SERVER));
-    u = (USER *) calloc(N + 1, sizeof(USER));
+
+//    s = (SERVER *) calloc(M + 1, sizeof(SERVER));
+//    u = (USER *) calloc(N + 1, sizeof(USER));
+    s = std::vector<SERVER*>(M + 1);
+    u = std::vector<USER*>(N + 1);
+
 
     for (int m = 1; m <= M; m++) {
-        fscanf(fp1, "%d", &s[m].index);
-        fscanf(fp1, "%f", &s[m].x);
-        fscanf(fp1, "%f", &s[m].y);
-        fscanf(fp1, "%d", &s[m].cpu);
-        fscanf(fp1, "%d", &s[m].ram);
-        s[m].distance.push_back(0.0);
+        int index, cpu, ram;
+        float x, y;
+        auto dist = new std::vector<double>();
+
+        fscanf(fp1, "%d", &index);
+        fscanf(fp1, "%f", &x);
+        fscanf(fp1, "%f", &y);
+        fscanf(fp1, "%d", &cpu);
+        fscanf(fp1, "%d", &ram);
+        dist->push_back(0.0);
+
+        s.at(m) = new SERVER(index, x, y, cpu, ram, dist);
     }
 //    fprintf(stdout, "servers read in\n");
 
     for (int n = 1; n <= N; n++) {
-        fscanf(fp1, "%d", &u[n].index);
-        fscanf(fp1, "%f", &u[n].x);
-        fscanf(fp1, "%f", &u[n].y);
-        fscanf(fp1, "%f", &u[n].ddl);
-        fscanf(fp1, "%f", &u[n].data);
+        int index;
+        float x, y, ddl, data;
+        auto tier = new std::vector<TIER*>();
 
-        fscanf(fp1, "%d", &u[n].tier[1].tier);
-        fscanf(fp1, "%d", &u[n].tier[1].cpu);
-        fscanf(fp1, "%d", &u[n].tier[1].ram);
-        fscanf(fp1, "%d", &u[n].tier[1].reward);
-        fscanf(fp1, "%f", &u[n].tier[1].time);
+        fscanf(fp1, "%d", &index);
+        fscanf(fp1, "%f", &x);
+        fscanf(fp1, "%f", &y);
+        fscanf(fp1, "%f", &ddl);
+        fscanf(fp1, "%f", &data);
 
-        fscanf(fp1, "%d", &u[n].tier[2].tier);
-        fscanf(fp1, "%d", &u[n].tier[2].cpu);
-        fscanf(fp1, "%d", &u[n].tier[2].ram);
-        fscanf(fp1, "%d", &u[n].tier[2].reward);
-        fscanf(fp1, "%f", &u[n].tier[2].time);
+        u.at(n) = new USER(index, x, y, ddl, data, tier);
+        u.at(n)->tier->push_back(new TIER(-999, 999, 999, 999.0, 0));
+
+        int tier_i, cpu, ram, reward;
+        float time;
+
+        fscanf(fp1, "%d", &tier_i);
+        fscanf(fp1, "%d", &cpu);
+        fscanf(fp1, "%d", &ram);
+        fscanf(fp1, "%d", &reward);
+        fscanf(fp1, "%f", &time);
+        u.at(n)->tier->push_back(new TIER(tier_i, cpu, ram, time, reward));
+
+        fscanf(fp1, "%d", &tier_i);
+        fscanf(fp1, "%d", &cpu);
+        fscanf(fp1, "%d", &ram);
+        fscanf(fp1, "%d", &reward);
+        fscanf(fp1, "%f", &time);
+        u.at(n)->tier->push_back(new TIER(tier_i, cpu, ram, time, reward));
     }
     fclose(fp1);
 //    fprintf(stdout, "users read in\n");
@@ -104,17 +125,17 @@ int main(int argc, char **argv) {
     // Pre-calculate the distance between servers and users
     for (int m = 1; m <= M; m++) {
         for (int n = 1; n <= N; n++) {
-            s[m].distance.push_back(calc_distance(s[m].x, s[m].y, u[n].x, u[n].y));
+            s.at(m)->distance->push_back(calc_distance(s.at(m)->x, s.at(m)->y, u.at(n)->x, u.at(n)->y));
         }
     }
 
     table_size = 1;
 //    fprintf(stdout, "table_size=%d\n", table_size);
     for (int m = 1; m <= M; m++) {
-//        fprintf(stdout, "1 + s[%d].cpu)=%d\n", m, 1 + s[m].cpu);
-//        fprintf(stdout, "1 + s[%d].ram)=%d\n", m, 1 + s[m].ram);
+//        fprintf(stdout, "1 + s[%d].cpu)=%d\n", m, 1 + s.at(m).cpu);
+//        fprintf(stdout, "1 + s[%d].ram)=%d\n", m, 1 + s.at(m).ram);
         if (flag == 0) {
-            table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
+            table_size = table_size * (1 + s.at(m)->cpu) * (1 + s.at(m)->ram);
         } else {
             table_size = table_size * (1 + lambda) * (1 + lambda);
         }
@@ -124,11 +145,12 @@ int main(int argc, char **argv) {
 
 //    fprintf(stdout, "K=%d, M=%d, N=%d, T=%d, table_size=%d\n", K, M, N, T, table_size);
 //    fprintf(stdout, "table_size=%d\n", table_size);
-    opt = (OPT *) calloc(table_size, sizeof(OPT));
+
+//    opt = (OPT *) calloc(table_size, sizeof(OPT));
+    opt = std::vector<OPT*>(table_size);
 
     // Run the dynamic programming algorithm
     dp(flag);
-
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     std::vector<std::vector<int>> solution(N);
@@ -137,8 +159,8 @@ int main(int argc, char **argv) {
     curr_combo.push_back(0);
     if (flag == 0) {
         for (int m = 1; m <= M; m++) {
-            curr_combo.push_back(s[m].cpu);
-            curr_combo.push_back(s[m].ram);
+            curr_combo.push_back(s[m]->cpu);
+            curr_combo.push_back(s[m]->ram);
         }
     } else {
         for (int m = 1; m <= M; m++) {
@@ -147,9 +169,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    int max_reward = opt[get_idx(N, T, curr_combo, flag)].reward;
+    int max_reward = opt.at(get_idx(N, T, curr_combo, flag))->reward;
     for (int n = N; n >= 1; n--) {
-        auto sol = opt[get_idx(n, curr_t, curr_combo, flag)].solution;
+        auto sol = opt[get_idx(n, curr_t, curr_combo, flag)]->solution;
         auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
         solution.at(n-1) = std::vector<int>{n, m_opt, k_opt, slot_opt};
         curr_t -= slot_opt;
@@ -177,12 +199,22 @@ int main(int argc, char **argv) {
     auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}.txt", mode_str, T, lambda);
     print_to_file(out_path.string(), solution, max_reward, time_delta, total_mem);
 
-    free(s);
-    free(u);
-    free(opt);
-
     std::cout << "Finished. Memory used: " << total_mem << " MB\n";
     std::cout << "Time taken: " << time_delta << " seconds\n";
+
+    // Clean up memory
+    for (int m = 1; m <= M; m++) {
+        delete s.at(m)->distance;
+        delete s.at(m);
+    }
+
+    for (int n = 1; n <= N; n++) {
+        delete u.at(n)->tier->at(0);
+        delete u.at(n)->tier->at(1);
+        delete u.at(n)->tier->at(2);
+        delete u.at(n)->tier;
+        delete u.at(n);
+    }
 
     return 0;
 }

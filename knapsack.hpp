@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <tuple>
 
-extern OPT *opt;
+extern std::vector<OPT*> opt;
 
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
@@ -49,7 +49,7 @@ long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
 std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
     auto val = 0;
     if (n > 1) {
-        val = opt[get_idx(n - 1, t, combo, mode)].reward;
+        val = opt.at(get_idx(n - 1, t, combo, mode))->reward;
     }
     int m_opt = 0;
     int k_opt = 1;
@@ -68,7 +68,7 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
             // Iterate over offloading tiers
             for (int k = 1; k <= K; k++) {
                 // Calculate the required amount of timeslot for offloading
-                auto tau_up = u[n].data / (bandwidth * std::log2(1 + curr_snr));
+                auto tau_up = u.at(n)->data / (bandwidth * std::log2(1 + curr_snr));
 
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
@@ -83,13 +83,13 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
                 }
 
                 // Check the deadline
-                if (tau_up <= u[n].ddl - u[n].tier[k].time) {
+                if (tau_up <= u.at(n)->ddl - u.at(n)->tier->at(k)->time) {
                     // Calculate the rewards of the current tier
                     auto prev_opt = 0;
                     if (n > 1) {
-                        prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
+                        prev_opt = opt.at(get_idx(n - 1, new_t, new_combo, mode))->reward;
                     }
-                    auto reward = u[n].tier[k].reward + prev_opt;
+                    auto reward = u.at(n)->tier->at(k)->reward + prev_opt;
 
                     if (reward > val) {
                         val = reward;
@@ -117,10 +117,10 @@ void dp(int mode) {
         std::vector<int> cpu;
 
         if (mode == 0) {
-            for (int r = 0; r <= s[m].ram; r++) {
+            for (int r = 0; r <= s.at(m)->ram; r++) {
                 ram.push_back(r);
             }
-            for (int c = 0; c <= s[m].cpu; c++) {
+            for (int c = 0; c <= s.at(m)->cpu; c++) {
                 cpu.push_back(c);
             }
         } else {
@@ -145,7 +145,7 @@ void dp(int mode) {
             for (const auto &cc: combos) {
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(slot_opt, m_opt, k_opt);
-                opt[get_idx(n, t, cc, mode)] = {solution, static_cast<unsigned short>(reward)};
+                opt.at(get_idx(n, t, cc, mode)) = new OPT(solution, static_cast<unsigned short>(reward));
             }
         }
     }

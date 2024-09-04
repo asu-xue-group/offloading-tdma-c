@@ -9,7 +9,7 @@ typedef struct TAG_SERVER {
     float y;                    // y coordinate of the server
     int cpu;                  // number of CPU cores
     int ram;                  // size of memory
-    std::vector<double> distance; // distance to each user
+    std::vector<double> *distance; // distance to each user
 } SERVER;
 
 
@@ -27,7 +27,7 @@ typedef struct TAG_USER {
     float y;          // y coordinate of the user
     float ddl;        // deadline
     float data;       // data size, in MB
-    TIER tier[3];    // task requirement and reward: tier[1] and tier[2], wasting tier[0]...
+    std::vector<TIER*> *tier;    // task requirement and reward: tier[1] and tier[2], wasting tier[0]...
 } USER;
 
 
