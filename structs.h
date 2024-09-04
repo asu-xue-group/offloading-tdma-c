@@ -3,41 +3,40 @@
 
 #include <vector>
 
-typedef struct TAG_SERVER {
+struct SERVER {
     int index;                // index of the server, starting from 1...
     float x;                    // x coordinate of the server
     float y;                    // y coordinate of the server
     int cpu;                  // number of CPU cores
     int ram;                  // size of memory
-    std::vector<double> distance; // distance to each user
-} SERVER;
+};
 
 
-typedef struct TAG_TIER {
+struct TIER {
     int tier;       // tier in {1, 2}. This may not be needed, but we will keep it.
     int cpu;        // cpu requirement
     int ram;        // ram requirement
     float time;       // execution time
     int reward;     // corresponding reward
-} TIER;
+};
 
-typedef struct TAG_USER {
+struct USER {
     int index;      // index of the user, starting from 1...
     float x;          // x coordinate of the user
     float y;          // y coordinate of the user
     float ddl;        // deadline
     float data;       // data size, in MB
     TIER tier[3];    // task requirement and reward: tier[1] and tier[2], wasting tier[0]...
-} USER;
+};
 
 
-typedef struct TAG_OPT {
+struct OPT {
 //    int mn;         // this user is assigned to server m, mn=0 means we skip this user.
 //    int kn;         // this user is assigned to accuracy k
 //    int slot;       // the number of time slots assigned to this user.
     unsigned short solution; // the "multiplexed" solution
     unsigned short reward;     // the corresponding optimal value
-} OPT;
+};
 
 
 /*

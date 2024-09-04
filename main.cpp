@@ -24,6 +24,7 @@ namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
 OPT *opt;
+std::vector<std::vector<double>> distance;
 int K, M, N, T;
 long table_size;
 
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
     
     s = (SERVER *) calloc(M + 1, sizeof(SERVER));
     u = (USER *) calloc(N + 1, sizeof(USER));
+    distance = std::vector<std::vector<double>>(M + 1);
 
     for (int m = 1; m <= M; m++) {
         fscanf(fp1, "%d", &s[m].index);
@@ -74,7 +76,7 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%f", &s[m].y);
         fscanf(fp1, "%d", &s[m].cpu);
         fscanf(fp1, "%d", &s[m].ram);
-        s[m].distance.push_back(0.0);
+        distance.at(m) = std::vector<double>(N + 1);
     }
 
     for (int n = 1; n <= N; n++) {
@@ -101,7 +103,7 @@ int main(int argc, char **argv) {
     // Pre-calculate the distance between servers and users
     for (int m = 1; m <= M; m++) {
         for (int n = 1; n <= N; n++) {
-            s[m].distance.push_back(calc_distance(s[m].x, s[m].y, u[n].x, u[n].y));
+            distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
         }
     }
 
@@ -142,6 +144,9 @@ int main(int argc, char **argv) {
         auto sol = opt[get_idx(n, curr_t, curr_combo, flag)].solution;
         auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
         solution.at(n-1) = std::vector<int>{n, m_opt, k_opt, slot_opt};
+        if (m_opt == 0) {
+            continue;
+        }
         curr_t -= slot_opt;
         update_combo(curr_combo, n, m_opt, k_opt, flag);
     }
