@@ -147,10 +147,6 @@ void dp(int mode) {
         for (int t = 0; t <= T; t++) {
             for (const auto &cc: combos) {
                 auto next_idx = get_idx(n, t, cc, mode);
-                if (next_idx >= table_size) {
-                    std::cout << std::format("Attempting to write to opt[{}], but the table is only of size {}",
-                                             next_idx, table_size) << std::endl;
-                }
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(slot_opt, m_opt, k_opt);
                 opt[next_idx].solution = solution;
@@ -158,8 +154,6 @@ void dp(int mode) {
             }
         }
     }
-
-    std::cout << "DP finished" << std::endl;
 }
 
 #endif //TDMA_KNAPSACK_KNAPSACK_HPP

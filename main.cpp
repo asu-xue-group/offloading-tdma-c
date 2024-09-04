@@ -145,7 +145,8 @@ int main(int argc, char **argv) {
     } else if (flag == -1) {
         mode_str = "restricted";
     }
-    auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}.txt", mode_str, T, lambda);
+    auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}_{}.txt",
+                                                  mode_str, T, lambda, static_cast<int>(total));
     print_to_file(out_path.string(), solution, max_reward, time_delta);
 
     std::cout << "Time taken: " << time_delta << " seconds\n";
