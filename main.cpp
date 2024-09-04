@@ -123,7 +123,6 @@ int main(int argc, char **argv) {
     table_size = table_size * (1 + T) * (1 + N);
 
 //    fprintf(stdout, "K=%d, M=%d, N=%d, T=%d, table_size=%d\n", K, M, N, T, table_size);
-//    fprintf(stdout, "table_size=%d\n", table_size);
     opt = (OPT *) calloc(table_size, sizeof(OPT));
 
     // Run the dynamic programming algorithm
@@ -183,6 +182,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Finished. Memory used: " << total_mem << " MB\n";
     std::cout << "Time taken: " << time_delta << " seconds\n";
+    std::cout << "Table size: " << table_size << std::endl;
 
     return 0;
 }

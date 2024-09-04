@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <iostream>
 
 extern OPT *opt;
 
@@ -145,6 +146,8 @@ void dp(int mode) {
             for (const auto &cc: combos) {
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(slot_opt, m_opt, k_opt);
+                auto idx = get_idx(n, t, cc, mode);
+                std::cout << "Writing to idx: " << idx << std::endl;
                 opt[get_idx(n, t, cc, mode)] = {solution, static_cast<unsigned short>(reward)};
             }
         }
