@@ -140,18 +140,21 @@ void dp(int mode) {
     // A placeholder for the zero index
     server_cpu_ram.push_back({0});
     auto combos = cartesian_product(server_cpu_ram);
+    auto last_idx = 0L;
 
     for (int n = 1; n <= N; n++) {
         for (int t = 0; t <= T; t++) {
             for (const auto &cc: combos) {
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(slot_opt, m_opt, k_opt);
-                auto idx = get_idx(n, t, cc, mode);
-                std::cout << "Writing to idx: " << idx << std::endl;
-                opt[get_idx(n, t, cc, mode)] = {solution, static_cast<unsigned short>(reward)};
+                last_idx = get_idx(n, t, cc, mode);
+                opt[last_idx] = {solution, static_cast<unsigned short>(reward)};
             }
         }
     }
+
+    std::cout << "DP finished" << std::endl;
+    std::cout << "The last idx is " << last_idx << std::endl;
 }
 
 #endif //TDMA_KNAPSACK_KNAPSACK_HPP
