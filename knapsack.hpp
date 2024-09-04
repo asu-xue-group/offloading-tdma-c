@@ -144,7 +144,8 @@ void dp(int mode) {
         for (int t = 0; t <= T; t++) {
             for (const auto &cc: combos) {
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
-                opt[get_idx(n, t, cc, mode)] = {m_opt, k_opt, slot_opt, reward};
+                auto solution = mux_solution(slot_opt, m_opt, k_opt);
+                opt[get_idx(n, t, cc, mode)] = {solution, static_cast<unsigned short>(reward)};
             }
         }
     }

@@ -4,6 +4,8 @@
 #include "structs.h"
 #include "global.h"
 #include <cmath>
+#include <tuple>
+
 
 extern SERVER *s;
 extern USER *u;
@@ -69,5 +71,15 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     }
 }
 
+unsigned short mux_solution(int slot, int server, int tier) {
+    return slot * 1000 + server * 10 + tier;
+}
+
+std::tuple<int, int, int> demux_solution(unsigned short solution) {
+    int slot = solution / 1000;
+    int server = (solution % 1000) / 10;
+    int tier = solution % 10;
+    return {slot, server, tier};
+}
 
 #endif

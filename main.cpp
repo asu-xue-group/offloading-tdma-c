@@ -146,7 +146,8 @@ int main(int argc, char **argv) {
 
     int max_reward = opt[get_idx(N, T, curr_combo, flag)].reward;
     for (int n = N; n >= 1; n--) {
-        auto [m_opt, k_opt, slot_opt, reward] = opt[get_idx(n, curr_t, curr_combo, flag)];
+        auto [sol, reward] = opt[get_idx(n, curr_t, curr_combo, flag)];
+        auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
         solution.push_back({n, m_opt, k_opt, slot_opt});
         curr_t -= slot_opt;
         update_combo(curr_combo, n, m_opt, k_opt, flag);

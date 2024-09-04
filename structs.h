@@ -32,10 +32,11 @@ typedef struct TAG_USER {
 
 
 typedef struct TAG_OPT {
-    int mn;         // this user is assigned to server m, mn=0 means we skip this user.
-    int kn;         // this user is assigned to accuracy k
-    int slot;       // the number of time slots assigned to this user.
-    int reward;     // the corresponding optimal value
+//    int mn;         // this user is assigned to server m, mn=0 means we skip this user.
+//    int kn;         // this user is assigned to accuracy k
+//    int slot;       // the number of time slots assigned to this user.
+    unsigned short solution; // the "multiplexed" solution
+    unsigned short reward;     // the corresponding optimal value
 } OPT;
 
 
