@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 
 #ifdef __linux__
     long long mem_bit = memInfo.totalram;
-    total_mem = mem_bit / std::pow(1024.0, 3);
+    total_mem = mem_bit / std::pow(1024.0, 3) / 8.0;
 #elif _WIN32
     DWORDLONG mem_bit = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
     total_mem = mem_bit / 8000000000.0;

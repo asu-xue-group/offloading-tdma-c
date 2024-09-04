@@ -17,12 +17,12 @@ long indexue(int n, int t, const int *C, const int *R, int mode) {
 
     if (mode == 0) {
         for (int m = 1; m <= M; m++) {
-            multiplier = multiplier * (1 + s[m].cpu);
-            multiplier = multiplier * (1 + s[m].ram);
+            multiplier *= (1 + s[m].cpu);
+            multiplier *= (1 + s[m].ram);
         }
     } else {
         for (int m = 1; m <= M; m++) {
-            multiplier = multiplier * (1 + lambda) * (1 + lambda);
+            multiplier *= (1 + lambda) * (1 + lambda);
         }
     }
 
