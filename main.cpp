@@ -25,6 +25,7 @@ SERVER *s;
 USER *u;
 OPT *opt;
 int K, M, N, T;
+long table_size;
 
 
 int main(int argc, char **argv) {
@@ -39,8 +40,6 @@ int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     FILE *fp1;         // input file
     int returnV, flag;
-
-    int table_size;
 
     // Check commandline arguments
     if (argc < 3) {
@@ -77,7 +76,6 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%d", &s[m].ram);
         s[m].distance.push_back(0.0);
     }
-//    fprintf(stdout, "servers read in\n");
 
     for (int n = 1; n <= N; n++) {
         fscanf(fp1, "%d", &u[n].index);
@@ -99,7 +97,6 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%f", &u[n].tier[2].time);
     }
     fclose(fp1);
-//    fprintf(stdout, "users read in\n");
 
     // Pre-calculate the distance between servers and users
     for (int m = 1; m <= M; m++) {
@@ -109,22 +106,16 @@ int main(int argc, char **argv) {
     }
 
     table_size = 1;
-//    fprintf(stdout, "table_size=%d\n", table_size);
     for (int m = 1; m <= M; m++) {
-//        fprintf(stdout, "1 + s[%d].cpu)=%d\n", m, 1 + s[m].cpu);
-//        fprintf(stdout, "1 + s[%d].ram)=%d\n", m, 1 + s[m].ram);
         if (flag == 0) {
             table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
         } else {
             table_size = table_size * (1 + lambda) * (1 + lambda);
         }
-//        fprintf(stdout, "m=%d, table_size=%d\n", m, table_size);
     }
     table_size = table_size * (1 + T) * (1 + N);
 
-//    fprintf(stdout, "K=%d, M=%d, N=%d, T=%d, table_size=%d\n", K, M, N, T, table_size);
     opt = (OPT *) calloc(table_size, sizeof(OPT));
-
     // Run the dynamic programming algorithm
     dp(flag);
 
