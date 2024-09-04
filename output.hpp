@@ -5,7 +5,7 @@
 #include <array>
 #include <string>
 
-void print_to_file(const std::string &filename, const std::vector<std::array<int, 4>> &solution, int optimal,
+void print_to_file(const std::string &filename, const std::vector<std::vector<int>> &solution, int optimal,
                    double time, double mem_used) {
     FILE *fp = fopen(filename.c_str(), "w");
     if (!fp) {

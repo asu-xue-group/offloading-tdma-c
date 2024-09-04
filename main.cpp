@@ -128,9 +128,10 @@ int main(int argc, char **argv) {
 
     // Run the dynamic programming algorithm
     dp(flag);
+
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    std::vector<std::array<int, 4>> solution;
+    std::vector<std::vector<int>> solution(N);
     int curr_t = T;
     auto curr_combo = std::vector<int>();
     curr_combo.push_back(0);
@@ -148,9 +149,9 @@ int main(int argc, char **argv) {
 
     int max_reward = opt[get_idx(N, T, curr_combo, flag)].reward;
     for (int n = N; n >= 1; n--) {
-        auto [sol, reward] = opt[get_idx(n, curr_t, curr_combo, flag)];
+        auto sol = opt[get_idx(n, curr_t, curr_combo, flag)].solution;
         auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
-        solution.push_back({n, m_opt, k_opt, slot_opt});
+        solution.at(n-1) = std::vector<int>{n, m_opt, k_opt, slot_opt};
         curr_t -= slot_opt;
         update_combo(curr_combo, n, m_opt, k_opt, flag);
     }
@@ -158,6 +159,7 @@ int main(int argc, char **argv) {
 
     auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
     double total_mem = 0.0;
+
 #ifdef __linux__
     long long mem_bit = memInfo.totalram;
     total_mem = mem_bit / std::pow(1024.0, 3);
