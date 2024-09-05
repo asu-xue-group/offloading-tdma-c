@@ -31,8 +31,8 @@ void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> st
 std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<int>> &sequences) {
     std::vector<std::vector<int>> accum;
     std::vector<int> stack;
-    if (sequences.size() > 0)
-        cartesian_recurse(accum, stack, sequences, sequences.size() - 1);
+    if (!sequences.empty())
+        cartesian_recurse(accum, stack, sequences, static_cast<int>(sequences.size()) - 1);
     return accum;
 }
 
