@@ -134,7 +134,6 @@ int main(int argc, char **argv) {
         curr_t -= slot_opt;
         update_combo(curr_combo, n, m_opt, k_opt, flag);
     }
-    std::reverse(solution.begin(), solution.end());
 
     auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
 
