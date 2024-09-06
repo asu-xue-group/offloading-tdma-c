@@ -2,8 +2,8 @@
 
 # Iterate through the test files
 
-for total in 10 20 30 40; do
-  for T in 10 20; do
-    ./tdma_knapsack "test_files/med-large/1/input.txt" 0 $T $total
+for i in {2..10}; do
+  for flag in -1 1; do
+    ./tdma_knapsack "test_files/med-large/$i/input.txt" $flag 10 25
   done
 done
