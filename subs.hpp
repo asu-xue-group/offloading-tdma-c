@@ -12,9 +12,9 @@ extern USER *u;
 extern std::vector<std::vector<double>> distance;
 extern int K, M, N;
 
-long indexue(int n, int t, const int *C, const int *R, int mode) {
-    long temp = 0;
-    long multiplier = (1 + T);
+long long indexue(int n, int t, const int *C, const int *R, int mode) {
+    long long temp = 0;
+    long long multiplier = (1 + T);
 
     if (mode == 0) {
         for (int m = 1; m <= M; m++) {
@@ -81,6 +81,18 @@ std::tuple<int, int, int> demux_solution(unsigned short solution) {
     int server = (solution % 1000) / 10;
     int tier = solution % 10;
     return {slot, server, tier};
+}
+
+long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
+    int C[M + 1];
+    int R[M + 1];
+
+    for (int m = 1; m <= M; m++) {
+        C[m] = combo[2 * m - 1];
+        R[m] = combo[2 * m];
+    }
+
+    return indexue(n, t, C, R, mode);
 }
 
 #endif

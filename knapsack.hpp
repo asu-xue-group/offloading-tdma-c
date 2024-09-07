@@ -12,7 +12,7 @@
 #include <format>
 
 extern OPT *opt;
-extern long table_size;
+extern long long table_size;
 
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
@@ -34,18 +34,6 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
     if (!sequences.empty())
         cartesian_recurse(accum, stack, sequences, static_cast<int>(sequences.size()) - 1);
     return accum;
-}
-
-long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
-    int C[M + 1];
-    int R[M + 1];
-
-    for (int m = 1; m <= M; m++) {
-        C[m] = combo[2 * m - 1];
-        R[m] = combo[2 * m];
-    }
-
-    return indexue(n, t, C, R, mode);
 }
 
 
@@ -153,6 +141,10 @@ void dp(int mode) {
                 opt[next_idx].reward = static_cast<unsigned short>(reward);
             }
         }
+        auto curr_solution = trace_solution(opt, mode, n);
+#ifdef print_solution
+        print_results(curr_solution, n);
+#endif
     }
 }
 

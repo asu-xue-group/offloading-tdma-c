@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <iostream>
 
+//#define debug
+//#define print_solution
 
 namespace fs = std::filesystem;
 SERVER *s;
@@ -17,7 +19,7 @@ USER *u;
 OPT *opt;
 std::vector<std::vector<double>> distance;
 int K, M, N;
-long table_size;
+long long table_size;
 
 
 int main(int argc, char **argv) {
@@ -107,34 +109,6 @@ int main(int argc, char **argv) {
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    std::vector<std::vector<int>> solution(N);
-    int curr_t = T;
-    auto curr_combo = std::vector<int>();
-    curr_combo.push_back(0);
-    if (flag == 0) {
-        for (int m = 1; m <= M; m++) {
-            curr_combo.push_back(s[m].cpu);
-            curr_combo.push_back(s[m].ram);
-        }
-    } else {
-        for (int m = 1; m <= M; m++) {
-            curr_combo.push_back(lambda);
-            curr_combo.push_back(lambda);
-        }
-    }
-
-    int max_reward = opt[get_idx(N, T, curr_combo, flag)].reward;
-    for (int n = N; n >= 1; n--) {
-        auto sol = opt[get_idx(n, curr_t, curr_combo, flag)].solution;
-        auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
-        solution.at(n-1) = std::vector<int>{n, m_opt, k_opt, slot_opt};
-        if (m_opt == 0) {
-            continue;
-        }
-        curr_t -= slot_opt;
-        update_combo(curr_combo, n, m_opt, k_opt, flag);
-    }
-
     auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
 
     fs::path p = argv[1];
@@ -146,7 +120,13 @@ int main(int argc, char **argv) {
     }
     auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}_{}.txt",
                                                   mode_str, T, lambda, static_cast<int>(total));
-    print_to_file(out_path.string(), solution, max_reward, time_delta);
+
+    auto solution = trace_solution(opt, flag, N);
+    print_to_file(out_path.string(), solution, time_delta);
+
+#ifdef print_solution
+    print_results(solution, N);
+#endif
 
     std::cout << "Time taken: " << time_delta << " seconds\n";
     std::cout << "Table size: " << table_size << std::endl;
