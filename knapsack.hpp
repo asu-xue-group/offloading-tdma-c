@@ -1,15 +1,16 @@
 #ifndef TDMA_KNAPSACK_KNAPSACK_HPP
 #define TDMA_KNAPSACK_KNAPSACK_HPP
 
+#include <algorithm>
+#include <format>
+#include <iostream>
+#include <vector>
+#include <tuple>
+#include "global.h"
 #include "structs.h"
 #include "subs.hpp"
-#include "global.h"
 #include "output.hpp"
-#include <vector>
-#include <algorithm>
-#include <tuple>
-#include <iostream>
-#include <format>
+
 
 extern OPT *opt;
 extern long long table_size;

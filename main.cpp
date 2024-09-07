@@ -1,14 +1,15 @@
 #include <cstdio>
 #include <cstdlib>
+#include <chrono>
+#include <iostream>
+#include <filesystem>
+#include <vector>
 #include "global.h"
-#include "structs.h"
-#include "subs.hpp"
 #include "knapsack.hpp"
 #include "output.hpp"
-#include <vector>
-#include <chrono>
-#include <filesystem>
-#include <iostream>
+#include "structs.h"
+#include "subs.hpp"
+
 
 //#define debug
 //#define print_solution
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
     std::cout << std::format("Running test case {} with flag {}, T={}, t0={}\n",
                              argv[1], flag, T, total) << std::endl;
 
-    
+
     s = (SERVER *) calloc(M + 1, sizeof(SERVER));
     u = (USER *) calloc(N + 1, sizeof(USER));
     distance = std::vector<std::vector<double>>(M + 1);

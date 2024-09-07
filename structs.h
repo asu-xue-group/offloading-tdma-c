@@ -1,7 +1,9 @@
 #ifndef _structs_h
 #define _structs_h 1
 
+
 #include <vector>
+
 
 struct SERVER {
     int index;                // index of the server, starting from 1...

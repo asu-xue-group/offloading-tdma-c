@@ -1,10 +1,11 @@
 #ifndef MY_SUBS_HPP
 #define MY_SUBS_HPP 1
 
-#include "structs.h"
-#include "global.h"
+
 #include <cmath>
 #include <tuple>
+#include "global.h"
+#include "structs.h"
 
 
 extern SERVER *s;
