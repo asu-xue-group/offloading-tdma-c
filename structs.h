@@ -40,6 +40,12 @@ struct OPT {
     unsigned short reward;     // the corresponding optimal value
 };
 
+struct TIMING {
+    int relay;      // the relay that this user is assigned to
+    int T;         // the total timeslot this user-server pair is assigned
+    int ur_time;    // the # timeslot it takes to transmit data from user to relay
+    int rs_time;    // the # timeslot it takes to transmit data from relay to server
+};
 
 /*
 table[j].reward represents opt(n, t, B)

@@ -10,7 +10,7 @@
 
 extern SERVER *s;
 extern USER *u;
-extern std::vector<std::vector<double>> distance;
+extern std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
 extern int K, M, N;
 
 long long indexue(int n, int t, const int *C, const int *R, int mode) {
@@ -57,7 +57,19 @@ double calc_distance(float x1, float y1, float x2, float y2) {
 }
 
 double snr(int m, int n) {
-    return Pmax / (noise * std::pow(distance.at(m).at(n), alpha));
+    return Pmax / (noise * std::pow(s_distance.at(m).at(n), alpha));
+}
+
+double snr_ur(int l, int n) {
+    return Pmax / (noise * std::pow(ur_distance.at(l).at(n), alpha));
+}
+
+double snr_rs(int l, int m) {
+    return Pmax / (noise * std::pow(rs_distance.at(l).at(m), alpha));
+}
+
+double trans_time(double data, double snr) {
+    return data / (bandwidth * std::log2(1 + snr));
 }
 
 void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {

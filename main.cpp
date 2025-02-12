@@ -15,13 +15,13 @@
 //#define print_solution
 
 namespace fs = std::filesystem;
-SERVER *s;
+SERVER *s, *r;
 USER *u;
 OPT *opt;
-std::vector<std::vector<double>> distance;
-int K, M, N;
+std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
+std::vector<std::vector<TIMING *>> timing;
+int K, M, L, N;
 long long table_size;
-
 
 int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         exit(0);
     }
     // Read in the size of the test case
-    returnV = fscanf(fp1, "%d%d%d", &K, &M, &N);
+    returnV = fscanf(fp1, "%d%d%d%d", &K, &M, &L, &N);
     if (returnV != 3) {
         fprintf(stderr, "wrong input\n");
         exit(0);
@@ -52,10 +52,17 @@ int main(int argc, char **argv) {
     std::cout << std::format("Running test case {} with flag {}, T={}, t0={}\n",
                              argv[1], flag, T, total) << std::endl;
 
-
+    // Initialize the data structures
     s = (SERVER *) calloc(M + 1, sizeof(SERVER));
+    r = (SERVER *) calloc(L + 1, sizeof(SERVER));
     u = (USER *) calloc(N + 1, sizeof(USER));
-    distance = std::vector<std::vector<double>>(M + 1);
+    s_distance = std::vector<std::vector<double>>(M + 1);
+    ur_distance = std::vector<std::vector<double>>(L + 1);
+    rs_distance = std::vector<std::vector<double>>(L + 1);
+    timing = std::vector<std::vector<TIMING *>>(N + 1);
+    for (int i = 0; i <= N; i++) {
+        timing.at(i) = std::vector<TIMING *>(M + 1);
+    }
 
     for (int m = 1; m <= M; m++) {
         fscanf(fp1, "%d", &s[m].index);
@@ -63,7 +70,17 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%f", &s[m].y);
         fscanf(fp1, "%d", &s[m].cpu);
         fscanf(fp1, "%d", &s[m].ram);
-        distance.at(m) = std::vector<double>(N + 1);
+        s_distance.at(m) = std::vector<double>(N + 1);
+    }
+
+    for (int l = 1; l <= L; l++) {
+        fscanf(fp1, "%d", &r[l].index);
+        fscanf(fp1, "%f", &r[l].x);
+        fscanf(fp1, "%f", &r[l].y);
+        fscanf(fp1, "%d", &r[l].cpu);
+        fscanf(fp1, "%d", &r[l].ram);
+        ur_distance.at(l) = std::vector<double>(N + 1);
+        rs_distance.at(l) = std::vector<double>(M + 1);
     }
 
     for (int n = 1; n <= N; n++) {
@@ -90,7 +107,66 @@ int main(int argc, char **argv) {
     // Pre-calculate the distance between servers and users
     for (int m = 1; m <= M; m++) {
         for (int n = 1; n <= N; n++) {
-            distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
+            s_distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
+        }
+    }
+    // Pre-calculate the distance between users and relays & relays and servers
+    for (int l = 1; l <= L; l++) {
+        for (int n = 1; n <= N; n++) {
+            ur_distance.at(l).at(n) = calc_distance(r[l].x, r[l].y, u[n].x, u[n].y);
+        }
+        for (int m = 1; m <= M; m++) {
+            rs_distance.at(l).at(m) = calc_distance(r[l].x, r[l].y, s[m].x, s[m].y);
+        }
+    }
+
+    // Pre-calculate the minimum timeslot required for each user-server pair
+    for (int n = 1; n <= N; n++) {
+        for (int m = 1; m <= M; m++) {
+            timing.at(n).at(m) = (TIMING *) calloc(1, sizeof(TIMING));
+
+            int best_relay = -1;
+            int best_T = INT_MAX;
+            int best_ur_time = -1;
+            int best_rs_time = -1;
+
+            // Test direct connection
+            double snr_result = snr(m, n);
+            if (snr_result < beta) {
+                continue;
+            } else {
+                int used_T = static_cast<int>(std::ceil(u[n].data / (X * z)));
+                if (used_T < best_T) {
+                    best_relay = 0;
+                    best_T = used_T;
+                    best_ur_time = -1;
+                    best_rs_time = -1;
+                }
+            }
+
+            // Test relay connection
+            for (int l = 1; l <= L; l++) {
+                double snr_ur_result = snr_ur(l, n);
+                double snr_rs_result = snr_rs(l, m);
+                if (snr_ur_result < beta || snr_rs_result < beta) {
+                    continue;
+                } else {
+                    int ur_time = static_cast<int>(std::ceil(u[n].data / (X * z)));
+                    int rs_time = static_cast<int>(std::ceil(u[n].data / (X * z)));
+                    int used_T = ur_time + rs_time;
+                    if (used_T < best_T) {
+                        best_relay = l;
+                        best_T = used_T;
+                        best_ur_time = ur_time;
+                        best_rs_time = rs_time;
+                    }
+                }
+            }
+
+            timing.at(n).at(m)->relay = best_relay;
+            timing.at(n).at(m)->T = best_T;
+            timing.at(n).at(m)->ur_time = best_ur_time;
+            timing.at(n).at(m)->rs_time = best_rs_time;
         }
     }
 
@@ -98,6 +174,13 @@ int main(int argc, char **argv) {
     for (int m = 1; m <= M; m++) {
         if (flag == 0) {
             table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
+        } else {
+            table_size = table_size * (1 + lambda) * (1 + lambda);
+        }
+    }
+    for (int l = 1; l <= L; l++) {
+        if (flag == 0) {
+            table_size = table_size * (1 + r[l].cpu) * (1 + r[l].ram);
         } else {
             table_size = table_size * (1 + lambda) * (1 + lambda);
         }
