@@ -105,32 +105,8 @@ void dp(int mode) {
     // Pre-calculate the Cartesian product of the server CPU and RAM combinations
     std::vector<std::vector<int>> server_cpu_ram;
 
-    // Treat relays as servers
-    for (int l = L; l >= 1; l--) {
-        std::vector<int> ram;
-        std::vector<int> cpu;
-
-        if (mode == 0) {
-            for (int rr = 0; rr <= r[l].ram; rr++) {
-                ram.push_back(rr);
-            }
-            for (int c = 0; c <= r[l].cpu; c++) {
-                cpu.push_back(c);
-            }
-        } else {
-            for (int rr = 0; rr <= lambda; rr++) {
-                ram.push_back(rr);
-            }
-            for (int c = 0; c <= lambda; c++) {
-                cpu.push_back(c);
-            }
-        }
-
-        server_cpu_ram.push_back(ram);
-        server_cpu_ram.push_back(cpu);
-    }
-
-    for (int m = M; m >= 1; m--) {
+    // Relay and server together
+    for (int m = M + L; m >= 1; m--) {
         std::vector<int> ram;
         std::vector<int> cpu;
 
