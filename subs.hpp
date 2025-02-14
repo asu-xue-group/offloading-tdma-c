@@ -18,12 +18,12 @@ long long indexue(int n, int t, const int *C, const int *R, int mode) {
     long long multiplier = (1 + T);
 
     if (mode == 0) {
-        for (int m = 1; m <= M; m++) {
+        for (int m = 1; m <= M + L; m++) {
             multiplier *= (1 + s[m].cpu);
             multiplier *= (1 + s[m].ram);
         }
     } else {
-        for (int m = 1; m <= M; m++) {
+        for (int m = 1; m <= M + L; m++) {
             multiplier *= (1 + lambda) * (1 + lambda);
         }
     }
@@ -34,14 +34,14 @@ long long indexue(int n, int t, const int *C, const int *R, int mode) {
     temp += t * multiplier;
 
     if (mode == 0) {
-        for (int m = 1; m <= M; m++) {
+        for (int m = 1; m <= M + L; m++) {
             multiplier /= (1 + s[m].cpu);
             temp += C[m] * multiplier;
             multiplier /= (1 + s[m].ram);
             temp += R[m] * multiplier;
         }
     } else {
-        for (int m = 1; m <= M; m++) {
+        for (int m = 1; m <= M + L; m++) {
             multiplier /= (1 + lambda);
             temp += C[m] * multiplier;
             multiplier /= (1 + lambda);
@@ -97,10 +97,10 @@ std::tuple<int, int, int> demux_solution(unsigned short solution) {
 }
 
 long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
-    int C[M + 1];
-    int R[M + 1];
+    int C[M + L + 1];
+    int R[M + L + 1];
 
-    for (int m = 1; m <= M; m++) {
+    for (int m = 1; m <= M + L; m++) {
         C[m] = combo[2 * m - 1];
         R[m] = combo[2 * m];
     }
