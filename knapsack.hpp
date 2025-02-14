@@ -13,6 +13,7 @@
 
 
 extern OPT *opt;
+extern std::vector<std::vector<TIMING *>> timing;
 extern long long table_size;
 
 
@@ -53,47 +54,46 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
     }
 
     // Iterate over all servers
-    for (int m = 1; m <= M; m++) {
-        // Check if the server offers good SNR
-        auto curr_snr = snr(m, n);
-        if (curr_snr >= beta) {
-            // Iterate over offloading tiers
-            for (int k = 1; k <= K; k++) {
-                // Calculate the required amount of timeslot for offloading
-                auto tau_up = u[n].data / (bandwidth * std::log2(1 + curr_snr));
+    for (int m = 1; m <= M + L; m++) {
+        // Obtain pre-calculated SNR and timeslot info
+        TIMING* curr = timing.at(n).at(m);
+        if (curr->relay == -1) {
+            continue;
+        }
 
-                // Check the remaining cpu, ram, timeslot
-                auto new_combo = combo;
-                update_combo(new_combo, n, m, k, mode);
-                // Check the timeslot
-                auto slot = static_cast<int>(std::ceil(tau_up / (total / static_cast<float>(T))));
-                auto new_t = t - slot;
+        // Iterate over offloading tiers
+        for (int k = 1; k <= K; k++) {
+            // Check the remaining cpu, ram, timeslot
+            auto new_combo = combo;
+            update_combo(new_combo, n, m, k, mode);
+            // Check the timeslot
+            auto new_t = t - curr->T;
 
-                // Check if resources are available
-                if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
-                    continue;
+            // Check if resources are available
+            if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
+                continue;
+            }
+
+            // Check the deadline
+            if (X * T * z <= u[n].ddl - u[n].tier[k].time) {
+                // Calculate the rewards of the current tier
+                auto prev_opt = 0;
+                if (n > 1) {
+                    prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
                 }
+                auto reward = u[n].tier[k].reward + prev_opt;
 
-                // Check the deadline
-                if (tau_up <= u[n].ddl - u[n].tier[k].time) {
-                    // Calculate the rewards of the current tier
-                    auto prev_opt = 0;
-                    if (n > 1) {
-                        prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
-                    }
-                    auto reward = u[n].tier[k].reward + prev_opt;
-
-                    if (reward > val) {
-                        val = reward;
-                        m_opt = m;
-                        k_opt = k;
-                        slot_opt = slot;
-                    }
+                if (reward > val) {
+                    val = reward;
+                    m_opt = m;
+                    k_opt = k;
+                    slot_opt = curr->T;
                 }
             }
         }
     }
 
+    // Notice here we are not returning the relay index as it is recoverable from `timing` variable
     return {val, m_opt, k_opt, slot_opt};
 }
 
@@ -104,20 +104,22 @@ void dp(int mode) {
     // Mode -1: "restricted" DP
     // Pre-calculate the Cartesian product of the server CPU and RAM combinations
     std::vector<std::vector<int>> server_cpu_ram;
-    for (int m = M; m >= 1; m--) {
+
+    // Treat relays as servers
+    for (int l = L; l >= 1; l--) {
         std::vector<int> ram;
         std::vector<int> cpu;
 
         if (mode == 0) {
-            for (int r = 0; r <= s[m].ram; r++) {
-                ram.push_back(r);
+            for (int rr = 0; rr <= r[l].ram; rr++) {
+                ram.push_back(rr);
             }
-            for (int c = 0; c <= s[m].cpu; c++) {
+            for (int c = 0; c <= r[l].cpu; c++) {
                 cpu.push_back(c);
             }
         } else {
-            for (int r = 0; r <= lambda; r++) {
-                ram.push_back(r);
+            for (int rr = 0; rr <= lambda; rr++) {
+                ram.push_back(rr);
             }
             for (int c = 0; c <= lambda; c++) {
                 cpu.push_back(c);
@@ -126,8 +128,33 @@ void dp(int mode) {
 
         server_cpu_ram.push_back(ram);
         server_cpu_ram.push_back(cpu);
-
     }
+
+    for (int m = M; m >= 1; m--) {
+        std::vector<int> ram;
+        std::vector<int> cpu;
+
+        if (mode == 0) {
+            for (int rr = 0; rr <= s[m].ram; rr++) {
+                ram.push_back(rr);
+            }
+            for (int c = 0; c <= s[m].cpu; c++) {
+                cpu.push_back(c);
+            }
+        } else {
+            for (int rr = 0; rr <= lambda; rr++) {
+                ram.push_back(rr);
+            }
+            for (int c = 0; c <= lambda; c++) {
+                cpu.push_back(c);
+            }
+        }
+
+        server_cpu_ram.push_back(ram);
+        server_cpu_ram.push_back(cpu);
+    }
+
+
     // A placeholder for the zero index
     server_cpu_ram.push_back({0});
     auto combos = cartesian_product(server_cpu_ram);
@@ -143,6 +170,7 @@ void dp(int mode) {
             }
         }
         auto curr_solution = trace_solution(opt, mode, n);
+
 #ifdef print_solution
         print_results(curr_solution, n);
 #endif

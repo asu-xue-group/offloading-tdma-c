@@ -15,7 +15,7 @@
 //#define print_solution
 
 namespace fs = std::filesystem;
-SERVER *s, *r;
+SERVER *s;
 USER *u;
 OPT *opt;
 std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
@@ -53,8 +53,9 @@ int main(int argc, char **argv) {
                              argv[1], flag, T, total) << std::endl;
 
     // Initialize the data structures
-    s = (SERVER *) calloc(M + 1, sizeof(SERVER));
-    r = (SERVER *) calloc(L + 1, sizeof(SERVER));
+    // Here relays are considered as servers
+    s = (SERVER *) calloc(M + L + 1, sizeof(SERVER));
+//    r = (SERVER *) calloc(L + 1, sizeof(SERVER));
     u = (USER *) calloc(N + 1, sizeof(USER));
     s_distance = std::vector<std::vector<double>>(M + 1);
     ur_distance = std::vector<std::vector<double>>(L + 1);
@@ -64,23 +65,18 @@ int main(int argc, char **argv) {
         timing.at(i) = std::vector<TIMING *>(M + 1);
     }
 
-    for (int m = 1; m <= M; m++) {
+    for (int m = 1; m <= M + L; m++) {
         fscanf(fp1, "%d", &s[m].index);
         fscanf(fp1, "%f", &s[m].x);
         fscanf(fp1, "%f", &s[m].y);
         fscanf(fp1, "%d", &s[m].cpu);
         fscanf(fp1, "%d", &s[m].ram);
-        s_distance.at(m) = std::vector<double>(N + 1);
-    }
-
-    for (int l = 1; l <= L; l++) {
-        fscanf(fp1, "%d", &r[l].index);
-        fscanf(fp1, "%f", &r[l].x);
-        fscanf(fp1, "%f", &r[l].y);
-        fscanf(fp1, "%d", &r[l].cpu);
-        fscanf(fp1, "%d", &r[l].ram);
-        ur_distance.at(l) = std::vector<double>(N + 1);
-        rs_distance.at(l) = std::vector<double>(M + 1);
+        if (m <= M) {
+            s_distance.at(m) = std::vector<double>(N + 1);
+        } else {
+            ur_distance.at(m) = std::vector<double>(N + 1);
+            rs_distance.at(m) = std::vector<double>(M + 1);
+        }
     }
 
     for (int n = 1; n <= N; n++) {
@@ -113,10 +109,10 @@ int main(int argc, char **argv) {
     // Pre-calculate the distance between users and relays & relays and servers
     for (int l = 1; l <= L; l++) {
         for (int n = 1; n <= N; n++) {
-            ur_distance.at(l).at(n) = calc_distance(r[l].x, r[l].y, u[n].x, u[n].y);
+            ur_distance.at(l).at(n) = calc_distance(s[l + M].x, s[l + M].y, u[n].x, u[n].y);
         }
         for (int m = 1; m <= M; m++) {
-            rs_distance.at(l).at(m) = calc_distance(r[l].x, r[l].y, s[m].x, s[m].y);
+            rs_distance.at(l).at(m) = calc_distance(s[l + M].x, s[l + M].y, s[m].x, s[m].y);
         }
     }
 
@@ -135,7 +131,7 @@ int main(int argc, char **argv) {
             if (snr_result < beta) {
                 continue;
             } else {
-                int used_T = static_cast<int>(std::ceil(u[n].data / (X * z)));
+                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
                 if (used_T < best_T) {
                     best_relay = 0;
                     best_T = used_T;
@@ -151,8 +147,8 @@ int main(int argc, char **argv) {
                 if (snr_ur_result < beta || snr_rs_result < beta) {
                     continue;
                 } else {
-                    int ur_time = static_cast<int>(std::ceil(u[n].data / (X * z)));
-                    int rs_time = static_cast<int>(std::ceil(u[n].data / (X * z)));
+                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
+                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
                     int used_T = ur_time + rs_time;
                     if (used_T < best_T) {
                         best_relay = l;
@@ -171,16 +167,9 @@ int main(int argc, char **argv) {
     }
 
     table_size = 1;
-    for (int m = 1; m <= M; m++) {
+    for (int m = 1; m <= M + L; m++) {
         if (flag == 0) {
             table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
-        } else {
-            table_size = table_size * (1 + lambda) * (1 + lambda);
-        }
-    }
-    for (int l = 1; l <= L; l++) {
-        if (flag == 0) {
-            table_size = table_size * (1 + r[l].cpu) * (1 + r[l].ram);
         } else {
             table_size = table_size * (1 + lambda) * (1 + lambda);
         }

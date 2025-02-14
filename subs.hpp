@@ -11,7 +11,7 @@
 extern SERVER *s;
 extern USER *u;
 extern std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
-extern int K, M, N;
+extern int K, M, N, L;
 
 long long indexue(int n, int t, const int *C, const int *R, int mode) {
     long long temp = 0;
