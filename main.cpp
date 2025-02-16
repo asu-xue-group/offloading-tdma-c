@@ -29,13 +29,11 @@ int main(int argc, char **argv) {
     int returnV, flag;
 
     // Check commandline arguments
-    if (argc < 4) {
-        fprintf(stderr, "Usage: %s <ifile> <flag> <T> <t0>\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <ifile> <flag>\n", argv[0]);
         exit(1);
     }
     flag = std::stoi(argv[2]);
-    T = std::stoi(argv[3]);
-    total = std::stof(argv[4]);
 
     fp1 = fopen(argv[1], "r");
     if (!fp1) {
@@ -44,13 +42,13 @@ int main(int argc, char **argv) {
     }
     // Read in the size of the test case
     returnV = fscanf(fp1, "%d%d%d%d", &K, &M, &L, &N);
-    if (returnV != 3) {
+    if (returnV != 4) {
         fprintf(stderr, "wrong input\n");
         exit(0);
     }
 
-    std::cout << std::format("Running test case {} with flag {}, T={}, t0={}\n",
-                             argv[1], flag, T, total) << std::endl;
+    std::cout << std::format("Running test case {} with flag {}, T={}, X={}, z={}\n",
+                             argv[1], flag, T, X, z) << std::endl;
 
     // Initialize the data structures
     // Here relays are considered as servers
@@ -74,8 +72,8 @@ int main(int argc, char **argv) {
         if (m <= M) {
             s_distance.at(m) = std::vector<double>(N + 1);
         } else {
-            ur_distance.at(m) = std::vector<double>(N + 1);
-            rs_distance.at(m) = std::vector<double>(M + 1);
+            ur_distance.at(m - M) = std::vector<double>(N + 1);
+            rs_distance.at(m - M) = std::vector<double>(M + 1);
         }
     }
 

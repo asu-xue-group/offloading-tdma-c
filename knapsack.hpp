@@ -55,10 +55,21 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
 
     // Iterate over all servers
     for (int m = 1; m <= M + L; m++) {
-        // Obtain pre-calculated SNR and timeslot info
-        TIMING* curr = timing.at(n).at(m);
-        if (curr->relay == -1) {
-            continue;
+        int required_T = -1;
+        // Special calculation for relay servers
+        if (m > M) {
+            double snr_relay = snr_ur(m - M, n);
+            if (snr_relay < beta) {
+                continue;
+            }
+            required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
+        } else {
+            // Obtain pre-calculated SNR and timeslot info
+            TIMING* curr = timing.at(n).at(m);
+            if (curr->relay == -1) {
+                continue;
+            }
+            required_T = curr->T;
         }
 
         // Iterate over offloading tiers
@@ -67,7 +78,7 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
             auto new_combo = combo;
             update_combo(new_combo, n, m, k, mode);
             // Check the timeslot
-            auto new_t = t - curr->T;
+            auto new_t = t - required_T;
 
             // Check if resources are available
             if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
@@ -87,7 +98,7 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
                     val = reward;
                     m_opt = m;
                     k_opt = k;
-                    slot_opt = curr->T;
+                    slot_opt = required_T;
                 }
             }
         }
