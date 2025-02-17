@@ -8,7 +8,7 @@ double bandwidth = 40.0;
 float total = 10.0;
 double Pmax = 10.0;
 int lambda = 5;
-int T = 100;                // number of timeslots in each frame
+int T = 128;                // number of timeslots in each frame
 int X = 128;                // total number of frames
 double z = 0.0078125;       // duration of each timeslot = 1/X
 

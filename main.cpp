@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     FILE *fp1;         // input file
     int returnV, flag;
+    double min_time = INT_MAX, max_time = 0; // minimum and maximum transmission time
 
     // Check commandline arguments
     if (argc < 2) {
@@ -95,6 +96,14 @@ int main(int argc, char **argv) {
         fscanf(fp1, "%d", &u[n].tier[2].ram);
         fscanf(fp1, "%d", &u[n].tier[2].reward);
         fscanf(fp1, "%f", &u[n].tier[2].time);
+
+        // Calculate the minimum and maximum transmission time
+        if (u[n].ddl - u[n].tier[2].time > max_time) {
+            max_time = u[n].ddl - u[n].tier[2].time;
+        }
+        if (u[n].ddl - u[n].tier[1].time < min_time) {
+            min_time = u[n].ddl - u[n].tier[1].time;
+        }
     }
     fclose(fp1);
 
@@ -173,34 +182,55 @@ int main(int argc, char **argv) {
         }
     }
     table_size = table_size * (1 + T) * (1 + N);
-
     opt = (OPT *) calloc(table_size, sizeof(OPT));
-    // Run the dynamic programming algorithm
-    dp(flag);
+
+    // Find the optimal X
+    // Lower bound should satisfy the minimum time requirement
+    // Upper bound should not exceed the maximum time requirement
+    int X_lb = std::ceil(min_time / (X * z));
+    int X_ub = std::ceil(max_time / (X * z));
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
+    std::cout << std::format("Preprocessing took {} seconds\n",
+                             std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0) << std::endl;
+    std::cout << std::format("Table size: {}\n", table_size) << std::endl;
 
-    fs::path p = argv[1];
-    std::string mode_str = "original";
-    if (flag == 1) {
-        mode_str = "relaxed";
-    } else if (flag == -1) {
-        mode_str = "restricted";
+    // Iterate through the possible X values to determine which one gives the best outcome
+    for (int x = 0; x <= X_ub; x++) {
+        begin = std::chrono::steady_clock::now();
+        X = x;
+        std::cout << "Calculating for X = " << X << std::endl;
+        dp(flag);
+        end = std::chrono::steady_clock::now();
+        auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
+
+        fs::path p = argv[1];
+        std::string mode_str = "original";
+        if (flag == 1) {
+            mode_str = "relaxed";
+        } else if (flag == -1) {
+            mode_str = "restricted";
+        }
+        auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
+                                                      mode_str, x, T, lambda);
+
+        auto solution = trace_solution(opt, flag, N);
+        print_to_file(out_path.string(), solution, time_delta);
+        std::cout << std::format("Time taken: {} seconds", time_delta) << std::endl;
+        std::cout << std::format("Optimal value: {}\n", solution.back().back()) << std::endl;
+        std::cout << std::endl;
+
     }
-    auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}_{}.txt",
-                                                  mode_str, T, lambda, static_cast<int>(total));
-
-    auto solution = trace_solution(opt, flag, N);
-    print_to_file(out_path.string(), solution, time_delta);
+    // Run the dynamic programming algorithm
+//    dp(flag);
 
 #ifdef print_solution
     print_results(solution, N);
 #endif
 
-    std::cout << "Time taken: " << time_delta << " seconds\n";
-    std::cout << "Table size: " << table_size << std::endl;
+//    std::cout << "Time taken: " << time_delta << " seconds\n";
+//    std::cout << "Table size: " << table_size << std::endl;
 
     free(s);
     free(u);

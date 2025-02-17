@@ -55,7 +55,7 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
 
     // Iterate over all servers
     for (int m = 1; m <= M + L; m++) {
-        int required_T = -1;
+        int required_T;
         // Special calculation for relay servers
         if (m > M) {
             double snr_relay = snr_ur(m - M, n);
@@ -63,6 +63,10 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
                 continue;
             }
             required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
+            // Catch the case of infinity
+            if (required_T < 0) {
+                continue;
+            }
         } else {
             // Obtain pre-calculated SNR and timeslot info
             TIMING* curr = timing.at(n).at(m);
