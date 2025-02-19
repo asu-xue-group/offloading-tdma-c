@@ -197,11 +197,34 @@ int main(int argc, char **argv) {
     std::cout << std::format("Table size: {}\n", table_size) << std::endl;
 
     // Iterate through the possible X values to determine which one gives the best outcome
-    for (int x = 0; x <= X_ub; x++) {
-        begin = std::chrono::steady_clock::now();
+    for (int x = 3; x <= X_ub; x++) {
         X = x;
+        // Update timing info after x changes
+        for (int n = 1; n <= N; n++) {
+            for (int m = 1; m <= M; m++) {
+                // Using relay
+                int l = timing.at(n).at(m)->relay;
+                if (l > 0) {
+                    double snr_ur_result = snr_ur(l, n);
+                    double snr_rs_result = snr_rs(l, m);
+                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
+                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
+                    int used_T = ur_time + rs_time;
+                    timing.at(n).at(m)->T = used_T;
+                    timing.at(n).at(m)->ur_time = ur_time;
+                    timing.at(n).at(m)->rs_time = rs_time;
+                } else if(l == 0) { // Direct connection
+                    double snr_result = snr(m, n);
+                    int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
+                    timing.at(n).at(m)->T = used_T;
+                }
+            }
+        }
+
+        begin = std::chrono::steady_clock::now();
         std::cout << "Calculating for X = " << X << std::endl;
         dp(flag);
+        std::cout << "Finished calculating for X = " << X << std::endl;
         end = std::chrono::steady_clock::now();
         auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
 
@@ -223,7 +246,7 @@ int main(int argc, char **argv) {
 
     }
     // Run the dynamic programming algorithm
-//    dp(flag);
+    //    dp(flag);
 
 #ifdef print_solution
     print_results(solution, N);

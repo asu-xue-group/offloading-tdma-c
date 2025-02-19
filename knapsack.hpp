@@ -63,10 +63,6 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
                 continue;
             }
             required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
-            // Catch the case of infinity
-            if (required_T < 0) {
-                continue;
-            }
         } else {
             // Obtain pre-calculated SNR and timeslot info
             TIMING* curr = timing.at(n).at(m);
@@ -74,6 +70,10 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
                 continue;
             }
             required_T = curr->T;
+        }
+        // Catch the case of infinity
+        if (required_T <= 0) {
+            continue;
         }
 
         // Iterate over offloading tiers
