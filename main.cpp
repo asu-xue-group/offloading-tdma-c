@@ -4,6 +4,8 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include "global.h"
 #include "knapsack.hpp"
 #include "output.hpp"
@@ -14,6 +16,7 @@
 //#define debug
 //#define print_solution
 
+using json = nlohmann::json;
 namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
@@ -35,27 +38,23 @@ int main(int argc, char **argv) {
         exit(1);
     }
     flag = std::stoi(argv[2]);
+    std::ifstream is(argv[1]);
+    json j;
+    is >> j;
 
-    fp1 = fopen(argv[1], "r");
-    if (!fp1) {
-        fprintf(stderr, "Error: cannot open file %s\n", argv[1]);
-        exit(0);
-    }
-    // Read in the size of the test case
-    returnV = fscanf(fp1, "%d%d%d%d", &K, &M, &L, &N);
-    if (returnV != 4) {
-        fprintf(stderr, "wrong input\n");
-        exit(0);
-    }
+    std::string name = j["name"];
+    K = j["num_user_tier"];
+    M = j["num_server"];
+    L = j["num_relay"];
+    N = j["num_user"];
 
     std::cout << std::format("Running test case {} with flag {}, T={}, X={}, z={}\n",
                              argv[1], flag, T, X, z) << std::endl;
 
     // Initialize the data structures
     // Here relays are considered as servers
-    s = (SERVER *) calloc(M + L + 1, sizeof(SERVER));
-//    r = (SERVER *) calloc(L + 1, sizeof(SERVER));
-    u = (USER *) calloc(N + 1, sizeof(USER));
+    s = new SERVER[M + L + 1];
+    u = new USER[N + 1];
     s_distance = std::vector<std::vector<double>>(M + 1);
     ur_distance = std::vector<std::vector<double>>(L + 1);
     rs_distance = std::vector<std::vector<double>>(L + 1);
@@ -65,37 +64,42 @@ int main(int argc, char **argv) {
     }
 
     for (int m = 1; m <= M + L; m++) {
-        fscanf(fp1, "%d", &s[m].index);
-        fscanf(fp1, "%f", &s[m].x);
-        fscanf(fp1, "%f", &s[m].y);
-        fscanf(fp1, "%d", &s[m].cpu);
-        fscanf(fp1, "%d", &s[m].ram);
         if (m <= M) {
+            s[m].index = m;
+            s[m].x = j["servers"][m - 1]["x"];
+            s[m].y = j["servers"][m - 1]["y"];
+            s[m].cpu = j["servers"][m - 1]["cpu"];
+            s[m].ram = j["servers"][m - 1]["ram"];
             s_distance.at(m) = std::vector<double>(N + 1);
         } else {
+            s[m].index = m;
+            s[m].x = j["relays"][m - M - 1]["x"];
+            s[m].y = j["relays"][m - M - 1]["y"];
+            s[m].cpu = j["relays"][m - M - 1]["cpu"];
+            s[m].ram = j["relays"][m - M - 1]["ram"];
             ur_distance.at(m - M) = std::vector<double>(N + 1);
             rs_distance.at(m - M) = std::vector<double>(M + 1);
         }
     }
 
     for (int n = 1; n <= N; n++) {
-        fscanf(fp1, "%d", &u[n].index);
-        fscanf(fp1, "%f", &u[n].x);
-        fscanf(fp1, "%f", &u[n].y);
-        fscanf(fp1, "%f", &u[n].ddl);
-        fscanf(fp1, "%f", &u[n].data);
+        u[n].index = n;
+        u[n].x = j["users"][n - 1]["x"];
+        u[n].y = j["users"][n - 1]["y"];
+        u[n].ddl = j["users"][n - 1]["ddl"];
+        u[n].data = j["users"][n - 1]["data"];
 
-        fscanf(fp1, "%d", &u[n].tier[1].tier);
-        fscanf(fp1, "%d", &u[n].tier[1].cpu);
-        fscanf(fp1, "%d", &u[n].tier[1].ram);
-        fscanf(fp1, "%d", &u[n].tier[1].reward);
-        fscanf(fp1, "%f", &u[n].tier[1].time);
+        u[n].tier[1].tier = 1;
+        u[n].tier[1].cpu = j["users"][n - 1]["tiers"][0]["cpu"];
+        u[n].tier[1].ram = j["users"][n - 1]["tiers"][0]["ram"];
+        u[n].tier[1].reward = j["users"][n - 1]["tiers"][0]["reward"];
+        u[n].tier[1].time = j["users"][n - 1]["tiers"][0]["time"];
 
-        fscanf(fp1, "%d", &u[n].tier[2].tier);
-        fscanf(fp1, "%d", &u[n].tier[2].cpu);
-        fscanf(fp1, "%d", &u[n].tier[2].ram);
-        fscanf(fp1, "%d", &u[n].tier[2].reward);
-        fscanf(fp1, "%f", &u[n].tier[2].time);
+        u[n].tier[2].tier = 2;
+        u[n].tier[2].cpu = j["users"][n - 1]["tiers"][1]["cpu"];
+        u[n].tier[2].ram = j["users"][n - 1]["tiers"][1]["ram"];
+        u[n].tier[2].reward = j["users"][n - 1]["tiers"][1]["reward"];
+        u[n].tier[2].time = j["users"][n - 1]["tiers"][1]["time"];
 
         // Calculate the minimum and maximum transmission time
         if (u[n].ddl - u[n].tier[2].time > max_time) {
@@ -105,7 +109,6 @@ int main(int argc, char **argv) {
             min_time = u[n].ddl - u[n].tier[1].time;
         }
     }
-    fclose(fp1);
 
     // Pre-calculate the distance between servers and users
     for (int m = 1; m <= M; m++) {
@@ -126,7 +129,7 @@ int main(int argc, char **argv) {
     // Pre-calculate the minimum timeslot required for each user-server pair
     for (int n = 1; n <= N; n++) {
         for (int m = 1; m <= M; m++) {
-            timing.at(n).at(m) = (TIMING *) calloc(1, sizeof(TIMING));
+            timing.at(n).at(m) = new TIMING();
 
             int best_relay = -1;
             int best_T = INT_MAX;
@@ -182,7 +185,7 @@ int main(int argc, char **argv) {
         }
     }
     table_size = table_size * (1 + T) * (1 + N);
-    opt = (OPT *) calloc(table_size, sizeof(OPT));
+    opt = new OPT[table_size];
 
     // Find the optimal X
     // Lower bound should satisfy the minimum time requirement
