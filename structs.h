@@ -37,6 +37,7 @@ struct OPT {
 //    int kn;         // this user is assigned to accuracy k
 //    int slot;       // the number of time slots assigned to this user.
     unsigned short solution; // the "multiplexed" solution
+    unsigned short slot;     // the number of time slots assigned to this user.
     unsigned short reward;     // the corresponding optimal value
 };
 

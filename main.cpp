@@ -28,8 +28,7 @@ long long table_size;
 
 int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    FILE *fp1;         // input file
-    int returnV, flag;
+    int flag;
     double min_time = INT_MAX, max_time = 0; // minimum and maximum transmission time
 
     // Check commandline arguments
@@ -39,8 +38,8 @@ int main(int argc, char **argv) {
     }
     flag = std::stoi(argv[2]);
     std::ifstream is(argv[1]);
-    json j;
-    is >> j;
+    json j = json::parse(is);
+
 
     std::string name = j["name"];
     K = j["num_user_tier"];

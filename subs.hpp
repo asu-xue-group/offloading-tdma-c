@@ -86,6 +86,12 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
 }
 
 unsigned short mux_solution(int slot, int server, int tier) {
+    if (server > 53) {
+        std::cerr << "Server number is " << server << " out of max 53" << std::endl;
+    }
+    if (tier > 5) {
+        std::cerr << "Tier number is " << tier << " out of max 5" << std::endl;
+    }
     return slot * 1000 + server * 10 + tier;
 }
 
