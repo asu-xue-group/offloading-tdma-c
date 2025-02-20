@@ -85,21 +85,20 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     }
 }
 
-unsigned short mux_solution(int slot, int server, int tier) {
-    if (server > 53) {
-        std::cerr << "Server number is " << server << " out of max 53" << std::endl;
+unsigned short mux_solution(int server, int tier) {
+    if (server > 655) {
+        std::cerr << "Server number is " << server << " out of max 655" << std::endl;
     }
-    if (tier > 5) {
-        std::cerr << "Tier number is " << tier << " out of max 5" << std::endl;
+    if (tier > 35) {
+        std::cerr << "Tier number is " << tier << " out of max 35" << std::endl;
     }
-    return slot * 1000 + server * 10 + tier;
+    return server * 100 + tier;
 }
 
-std::tuple<int, int, int> demux_solution(unsigned short solution) {
-    int slot = solution / 1000;
-    int server = (solution % 1000) / 10;
-    int tier = solution % 10;
-    return {slot, server, tier};
+std::tuple<int, int> demux_solution(unsigned short solution) {
+    int server = solution / 100;
+    int tier = solution % 100;
+    return {server, tier};
 }
 
 long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {

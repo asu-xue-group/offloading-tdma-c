@@ -1,0 +1,170 @@
+{
+    "name": "small_2",
+    "num_user": 5,
+    "num_server": 2,
+    "num_relay": 2,
+    "num_server_tier": 1,
+    "num_user_tier": 2,
+    "servers": [
+        {
+            "name": "Server 1",
+            "x": 285.45,
+            "y": 318.64,
+            "cpu": 8,
+            "ram": 4,
+            "tier": 1
+        },
+        {
+            "name": "Server 2",
+            "x": 782.8,
+            "y": 132.72,
+            "cpu": 8,
+            "ram": 4,
+            "tier": 1
+        }
+    ],
+    "relays": [
+        {
+            "name": "Relay 1",
+            "x": 590.09,
+            "y": 705.7,
+            "cpu": 2,
+            "ram": 2
+        },
+        {
+            "name": "Relay 2",
+            "x": 219.11,
+            "y": 99.63,
+            "cpu": 2,
+            "ram": 2
+        }
+    ],
+    "users": [
+        {
+            "name": "User 1",
+            "x": 274.97,
+            "y": 657.43,
+            "ddl": 35.87,
+            "data": 937.89,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 7,
+                    "time": 16.36
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 6,
+                    "time": 8.79
+                }
+            ]
+        },
+        {
+            "name": "User 2",
+            "x": 391.62,
+            "y": 187.25,
+            "ddl": 35.05,
+            "data": 1037.61,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 9,
+                    "time": 11.97
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 7,
+                    "time": 6.72
+                }
+            ]
+        },
+        {
+            "name": "User 3",
+            "x": 107.21,
+            "y": 104.54,
+            "ddl": 35.05,
+            "data": 1025.74,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 9,
+                    "time": 15.63
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 5,
+                    "time": 11.74
+                }
+            ]
+        },
+        {
+            "name": "User 4",
+            "x": 862.12,
+            "y": 438.19,
+            "ddl": 31.46,
+            "data": 1360.28,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 6,
+                    "time": 13.31
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 5,
+                    "time": 12.65
+                }
+            ]
+        },
+        {
+            "name": "User 5",
+            "x": 100.7,
+            "y": 38.6,
+            "ddl": 36.21,
+            "data": 716.27,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 10,
+                    "time": 15.26
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 7,
+                    "time": 10.55
+                }
+            ]
+        }
+    ],
+    "field_x": 1000,
+    "field_y": 1000,
+    "alpha": 3,
+    "beta": 15,
+    "W": 40,
+    "N": 3e-10,
+    "T": 20,
+    "t0": 10,
+    "P_max": 10,
+    "B": 13.33,
+    "B_total": 40
+}

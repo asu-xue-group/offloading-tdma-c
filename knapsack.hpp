@@ -150,6 +150,7 @@ void dp(int mode) {
     auto combos = cartesian_product(server_cpu_ram);
 
     for (int n = 1; n <= N; n++) {
+        std::cout << "Calculating for user " << n << std::endl;
         for (int t = 0; t <= T; t++) {
             for (const auto &cc: combos) {
                 auto next_idx = get_idx(n, t, cc, mode);
@@ -158,8 +159,9 @@ void dp(int mode) {
 //                    exit(1);
                 }
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
-                auto solution = mux_solution(slot_opt, m_opt, k_opt);
+                auto solution = mux_solution(m_opt, k_opt);
                 opt[next_idx].solution = solution;
+                opt[next_idx].slot = static_cast<unsigned short>(slot_opt);
                 opt[next_idx].reward = static_cast<unsigned short>(reward);
             }
         }

@@ -72,7 +72,8 @@ std::vector<std::vector<int>> trace_solution(OPT *opt, int flag, int num_user) {
         auto index = get_idx(n, curr_t, curr_combo, flag);
         auto sol = opt[index].solution;
         auto reward = opt[index].reward;
-        auto [slot_opt, m_opt, k_opt] = demux_solution(sol);
+        auto slot_opt = opt[index].slot;
+        auto [m_opt, k_opt] = demux_solution(sol);
         solution.at(n - 1) = std::vector<int>{n, m_opt, k_opt, slot_opt, reward};
         if (m_opt == 0) {
             continue;
