@@ -124,20 +124,11 @@ void dp(int mode) {
         std::vector<int> ram;
         std::vector<int> cpu;
 
-        if (mode == 0) {
-            for (int rr = 0; rr <= s[m].ram; rr++) {
-                ram.push_back(rr);
-            }
-            for (int c = 0; c <= s[m].cpu; c++) {
-                cpu.push_back(c);
-            }
-        } else {
-            for (int rr = 0; rr <= lambda; rr++) {
-                ram.push_back(rr);
-            }
-            for (int c = 0; c <= lambda; c++) {
-                cpu.push_back(c);
-            }
+        for (int rr = 0; rr <= s[m].ram; rr++) {
+            ram.push_back(rr);
+        }
+        for (int c = 0; c <= s[m].cpu; c++) {
+            cpu.push_back(c);
         }
 
         server_cpu_ram.push_back(ram);

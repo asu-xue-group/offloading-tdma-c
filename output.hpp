@@ -40,14 +40,14 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
     fclose(fp);
 }
 
-void result_to_csv(const std::filesystem::path& filename, const std::string& mode, int tc_num, int x, int _lambda, int reward, double time) {
+void result_to_csv(const std::filesystem::path& filename, const std::string& flag, int tc_num, int x, int _lambda, int reward, double time, long long table_size) {
     FILE *fp = fopen(filename.string().c_str(), "a");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());
         exit(0);
     }
 
-    fprintf(fp, "%s,%d,%d,%d,%d,%.4f\n", mode.c_str(), tc_num, x, _lambda, reward, time);
+    fprintf(fp, "%s,%d,%d,%d,%d,%.4f,%lld\n", flag.c_str(), tc_num, x, _lambda, reward, time, table_size);
     fclose(fp);
 }
 
@@ -67,16 +67,9 @@ std::vector<std::vector<int>> trace_solution(OPT *opt, int flag, int num_user) {
     int curr_t = T;
     auto curr_combo = std::vector<int>();
     curr_combo.push_back(0);
-    if (flag == 0) {
-        for (int m = 1; m <= M + L; m++) {
-            curr_combo.push_back(s[m].cpu);
-            curr_combo.push_back(s[m].ram);
-        }
-    } else {
-        for (int m = 1; m <= M + L; m++) {
-            curr_combo.push_back(lambda);
-            curr_combo.push_back(lambda);
-        }
+    for (int m = 1; m <= M + L; m++) {
+        curr_combo.push_back(s[m].cpu);
+        curr_combo.push_back(s[m].ram);
     }
 
     for (int n = num_user; n >= 1; n--) {

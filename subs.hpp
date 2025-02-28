@@ -13,19 +13,13 @@ extern USER *u;
 extern std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
 extern int K, M, N, L;
 
-long long indexue(int n, int t, const int *C, const int *R, int mode) {
+long long indexue(int n, int t, const int *C, const int *R) {
     long long temp = 0;
     long long multiplier = (1 + T);
 
-    if (mode == 0) {
-        for (int m = 1; m <= M + L; m++) {
-            multiplier *= (1 + s[m].cpu);
-            multiplier *= (1 + s[m].ram);
-        }
-    } else {
-        for (int m = 1; m <= M + L; m++) {
-            multiplier *= (1 + lambda) * (1 + lambda);
-        }
+    for (int m = 1; m <= M + L; m++) {
+        multiplier *= (1 + s[m].cpu);
+        multiplier *= (1 + s[m].ram);
     }
 
     temp += n * multiplier;
@@ -33,20 +27,11 @@ long long indexue(int n, int t, const int *C, const int *R, int mode) {
     multiplier /= (1 + T);
     temp += t * multiplier;
 
-    if (mode == 0) {
-        for (int m = 1; m <= M + L; m++) {
-            multiplier /= (1 + s[m].cpu);
-            temp += C[m] * multiplier;
-            multiplier /= (1 + s[m].ram);
-            temp += R[m] * multiplier;
-        }
-    } else {
-        for (int m = 1; m <= M + L; m++) {
-            multiplier /= (1 + lambda);
-            temp += C[m] * multiplier;
-            multiplier /= (1 + lambda);
-            temp += R[m] * multiplier;
-        }
+    for (int m = 1; m <= M + L; m++) {
+        multiplier /= (1 + s[m].cpu);
+        temp += C[m] * multiplier;
+        multiplier /= (1 + s[m].ram);
+        temp += R[m] * multiplier;
     }
 
     return temp;
@@ -73,15 +58,23 @@ double trans_time(double data, double snr) {
 }
 
 void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
-    if (mode == 0) {
+    if (!s[m].cpu_scaled) {
         combo[2 * m - 1] -= u[n].tier[k].cpu;
+    } else {
+        if (mode == 1) {
+            combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
+        } else if (mode == -1) {
+            combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
+        }
+    }
+    if (!s[m].ram_scaled) {
         combo[2 * m] -= u[n].tier[k].ram;
-    } else if (mode == 1) {
-        combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
-        combo[2 * m] -= static_cast<int>(std::floor(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
-    } else if (mode == -1) {
-        combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
-        combo[2 * m] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+    } else {
+        if (mode == 1) {
+            combo[2 * m] -= static_cast<int>(std::floor(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+        } else if (mode == -1) {
+            combo[2 * m] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+        }
     }
 }
 
@@ -110,7 +103,7 @@ long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
         R[m] = combo[2 * m];
     }
 
-    return indexue(n, t, C, R, mode);
+    return indexue(n, t, C, R);
 }
 
 #endif

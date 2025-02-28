@@ -51,13 +51,15 @@ int main(int argc, char **argv) {
     // Initialize the csv file
     fs::path p = argv[1];
     auto csv_file = p.parent_path().parent_path() / "results.csv";
-    FILE *fp = fopen(csv_file.string().c_str(), "a");
-    if (!fp) {
-        fprintf(stderr, "Error: cannot open file %s\n", csv_file.string().c_str());
-        exit(0);
+    if (!fs::exists(csv_file)) {
+        FILE *fp = fopen(csv_file.string().c_str(), "a");
+        if (!fp) {
+            fprintf(stderr, "Error: cannot open file %s\n", csv_file.string().c_str());
+            exit(0);
+        }
+        fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", "mode", "tc_num", "X", "lambda", "reward", "time", "t_size");
+        fclose(fp);
     }
-
-    fprintf(fp, "%s,%s,%s,%s,%s,%s\n", "mode", "tc_num", "X", "lambda", "reward", "time");
 
 
     std::string name = j["name"];
@@ -67,7 +69,7 @@ int main(int argc, char **argv) {
     N = j["num_user"];
 
     std::cout << std::format("Running test case {} with flag {}, T={}, X={}, z={}\n",
-                             argv[1], flag, T, X, z) << std::endl;
+                             argv[1], mode_str, T, X, z) << std::endl;
 
     // Initialize the data structures
     // Here relays are considered as servers
@@ -82,21 +84,40 @@ int main(int argc, char **argv) {
     }
 
     for (int m = 1; m <= M + L; m++) {
+        int cpu, ram;
+
         if (m <= M) {
             s[m].index = m;
             s[m].x = j["servers"][m - 1]["x"];
             s[m].y = j["servers"][m - 1]["y"];
-            s[m].cpu = j["servers"][m - 1]["cpu"];
-            s[m].ram = j["servers"][m - 1]["ram"];
+            cpu = j["servers"][m - 1]["cpu"];
+            ram = j["servers"][m - 1]["ram"];
+
             s_distance.at(m) = std::vector<double>(N + 1);
         } else {
             s[m].index = m;
             s[m].x = j["relays"][m - M - 1]["x"];
             s[m].y = j["relays"][m - M - 1]["y"];
-            s[m].cpu = j["relays"][m - M - 1]["cpu"];
-            s[m].ram = j["relays"][m - M - 1]["ram"];
+            cpu = j["relays"][m - M - 1]["cpu"];
+            ram = j["relays"][m - M - 1]["ram"];
             ur_distance.at(m - M) = std::vector<double>(N + 1);
             rs_distance.at(m - M) = std::vector<double>(M + 1);
+        }
+
+        // Only do the scaling if the flag is not 0 and the original values are greater than lambda
+        if (flag == 0 || cpu <= lambda) {
+            s[m].cpu = cpu;
+            s[m].cpu_scaled = false;
+        } else {
+            s[m].cpu = lambda;
+            s[m].cpu_scaled = true;
+        }
+        if (flag == 0 || ram <= lambda) {
+            s[m].ram = ram;
+            s[m].ram_scaled = false;
+        } else {
+            s[m].ram = lambda;
+            s[m].ram_scaled = true;
         }
     }
 
@@ -196,11 +217,7 @@ int main(int argc, char **argv) {
 
     table_size = 1;
     for (int m = 1; m <= M + L; m++) {
-        if (flag == 0) {
-            table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
-        } else {
-            table_size = table_size * (1 + lambda) * (1 + lambda);
-        }
+        table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
     }
     table_size = table_size * (1 + T) * (1 + N);
     opt = new OPT[table_size];
@@ -251,7 +268,6 @@ int main(int argc, char **argv) {
         end = std::chrono::steady_clock::now();
         auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
 
-        fs::path p = argv[1];
         auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
                                                       mode_str, x, T, lambda);
 
@@ -276,7 +292,7 @@ int main(int argc, char **argv) {
             std::string("$1")
     );
     result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
-                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0);
+                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0, table_size);
 
 #ifdef print_solution
     print_results(solution, N);

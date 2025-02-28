@@ -11,6 +11,8 @@ struct SERVER {
     float y;                    // y coordinate of the server
     int cpu;                  // number of CPU cores
     int ram;                  // size of memory
+    bool cpu_scaled;          // whether the CPU is scaled
+    bool ram_scaled;          // whether the RAM is scaled
 };
 
 
