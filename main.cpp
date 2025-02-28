@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <vector>
 #include <fstream>
+#include <regex>
 #include <nlohmann/json.hpp>
 #include "global.h"
 #include "knapsack.hpp"
@@ -39,6 +40,24 @@ int main(int argc, char **argv) {
     flag = std::stoi(argv[2]);
     std::ifstream is(argv[1]);
     json j = json::parse(is);
+
+    std::string mode_str = "original";
+    if (flag == 1) {
+        mode_str = "relaxed";
+    } else if (flag == -1) {
+        mode_str = "restricted";
+    }
+
+    // Initialize the csv file
+    fs::path p = argv[1];
+    auto csv_file = p.parent_path().parent_path() / "results.csv";
+    FILE *fp = fopen(csv_file.string().c_str(), "a");
+    if (!fp) {
+        fprintf(stderr, "Error: cannot open file %s\n", csv_file.string().c_str());
+        exit(0);
+    }
+
+    fprintf(fp, "%s,%s,%s,%s,%s,%s\n", "mode", "tc_num", "X", "lambda", "reward", "time");
 
 
     std::string name = j["name"];
@@ -189,7 +208,7 @@ int main(int argc, char **argv) {
     // Find the optimal X
     // Lower bound should satisfy the minimum time requirement
     // Upper bound should not exceed the maximum time requirement
-    int X_lb = std::ceil(min_time / (X * z));
+//    int X_lb = std::ceil(min_time / (X * z));
     int X_ub = std::ceil(max_time / (X * z));
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -198,8 +217,11 @@ int main(int argc, char **argv) {
                              std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0) << std::endl;
     std::cout << std::format("Table size: {}\n", table_size) << std::endl;
 
+    int best_reward = 0, best_X = 0;
+    std::vector<std::vector<int>> best_results;
+
     // Iterate through the possible X values to determine which one gives the best outcome
-    for (int x = 3; x <= X_ub; x++) {
+    for (int x = 3; x <= 3; x++) {
         X = x;
         // Update timing info after x changes
         for (int n = 1; n <= N; n++) {
@@ -226,29 +248,35 @@ int main(int argc, char **argv) {
         begin = std::chrono::steady_clock::now();
         std::cout << "Calculating for X = " << X << std::endl;
         dp(flag);
-        std::cout << "Finished calculating for X = " << X << std::endl;
         end = std::chrono::steady_clock::now();
         auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
 
         fs::path p = argv[1];
-        std::string mode_str = "original";
-        if (flag == 1) {
-            mode_str = "relaxed";
-        } else if (flag == -1) {
-            mode_str = "restricted";
-        }
         auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
                                                       mode_str, x, T, lambda);
 
         auto solution = trace_solution(opt, flag, N);
+
+        if (solution.back().back() > best_reward) {
+            best_reward = solution.back().back();
+            best_X = x;
+            best_results = solution;
+        }
+
         print_to_file(out_path.string(), solution, time_delta);
         std::cout << std::format("Time taken: {} seconds", time_delta) << std::endl;
         std::cout << std::format("Optimal value: {}\n", solution.back().back()) << std::endl;
         std::cout << std::endl;
 
     }
-    // Run the dynamic programming algorithm
-    //    dp(flag);
+
+    std::string tc_num = std::regex_replace(
+            p.parent_path().stem().string(),
+            std::regex("[^0-9]*([0-9]+).*"),
+            std::string("$1")
+    );
+    result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
+                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0);
 
 #ifdef print_solution
     print_results(solution, N);

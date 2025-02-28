@@ -23,7 +23,7 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
         if (o[1] == 0) {
             fprintf(fp, "User %d is not assigned to any server\n", o[0]);
         } else if (o[1] <= M) {
-            if (timing.at(o[0]).at(o[1])->relay == -1) {
+            if (timing.at(o[0]).at(o[1])->relay == 0) {
                 fprintf(fp, "User %d is assigned to server %d with algo %d (direct connection), and is assigned %d time slots\n",
                         o[0], o[1], o[2], o[3]);
             } else {
@@ -37,6 +37,17 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
     }
     fprintf(fp, "Time taken: %.4f seconds\n", time);
 
+    fclose(fp);
+}
+
+void result_to_csv(const std::filesystem::path& filename, const std::string& mode, int tc_num, int x, int _lambda, int reward, double time) {
+    FILE *fp = fopen(filename.string().c_str(), "a");
+    if (!fp) {
+        fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());
+        exit(0);
+    }
+
+    fprintf(fp, "%s,%d,%d,%d,%d,%.4f\n", mode.c_str(), tc_num, x, _lambda, reward, time);
     fclose(fp);
 }
 
