@@ -62,18 +62,18 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
         combo[2 * m - 1] -= u[n].tier[k].cpu;
     } else {
         if (mode == 1) {
-            combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
+            combo[2 * m - 1] -= static_cast<int>(std::floor(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu_orig)));
         } else if (mode == -1) {
-            combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu)));
+            combo[2 * m - 1] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].cpu / static_cast<double>(s[m].cpu_orig)));
         }
     }
     if (!s[m].ram_scaled) {
         combo[2 * m] -= u[n].tier[k].ram;
     } else {
         if (mode == 1) {
-            combo[2 * m] -= static_cast<int>(std::floor(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+            combo[2 * m] -= static_cast<int>(std::floor(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram_orig)));
         } else if (mode == -1) {
-            combo[2 * m] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram)));
+            combo[2 * m] -= static_cast<int>(std::ceil(lambda * u[n].tier[k].ram / static_cast<double>(s[m].ram_orig)));
         }
     }
 }

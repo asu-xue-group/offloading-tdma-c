@@ -28,7 +28,7 @@ int K, M, L, N;
 long long table_size;
 
 int main(int argc, char **argv) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();
     int flag;
     double min_time = INT_MAX, max_time = 0; // minimum and maximum transmission time
 
@@ -104,6 +104,8 @@ int main(int argc, char **argv) {
             rs_distance.at(m - M) = std::vector<double>(M + 1);
         }
 
+        s[m].cpu_orig = cpu;
+        s[m].ram_orig = ram;
         // Only do the scaling if the flag is not 0 and the original values are greater than lambda
         if (flag == 0 || cpu <= lambda) {
             s[m].cpu = cpu;
@@ -231,14 +233,14 @@ int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     std::cout << std::format("Preprocessing took {} seconds\n",
-                             std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0) << std::endl;
+                             std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0) << std::endl;
     std::cout << std::format("Table size: {}\n", table_size) << std::endl;
 
     int best_reward = 0, best_X = 0;
     std::vector<std::vector<int>> best_results;
 
     // Iterate through the possible X values to determine which one gives the best outcome
-    for (int x = 0; x <= X_ub; x++) {
+    for (int x = 13; x <= 13; x++) {
         X = x;
         // Update timing info after x changes
         for (int n = 1; n <= N; n++) {
@@ -262,7 +264,7 @@ int main(int argc, char **argv) {
             }
         }
 
-        begin = std::chrono::steady_clock::now();
+        auto begin = std::chrono::steady_clock::now();
         std::cout << "Calculating for X = " << X << std::endl;
         dp(flag);
         end = std::chrono::steady_clock::now();
@@ -291,8 +293,9 @@ int main(int argc, char **argv) {
             std::regex("[^0-9]*([0-9]+).*"),
             std::string("$1")
     );
+    end = std::chrono::steady_clock::now();
     result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
-                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0, table_size);
+                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0, table_size);
 
 #ifdef print_solution
     print_results(solution, N);

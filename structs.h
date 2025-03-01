@@ -10,7 +10,9 @@ struct SERVER {
     float x;                    // x coordinate of the server
     float y;                    // y coordinate of the server
     int cpu;                  // number of CPU cores
+    int cpu_orig;             // original number of CPU cores (before scaling)
     int ram;                  // size of memory
+    int ram_orig;             // original size of memory (before scaling)
     bool cpu_scaled;          // whether the CPU is scaled
     bool ram_scaled;          // whether the RAM is scaled
 };
