@@ -1,7 +1,7 @@
 {
     "name": "small_5",
     "num_user": 5,
-    "num_server": 2,
+    "num_server": 1,
     "num_relay": 2,
     "num_server_tier": 1,
     "num_user_tier": 2,
@@ -13,28 +13,20 @@
             "cpu": 8,
             "ram": 4,
             "tier": 1
-        },
-        {
-            "name": "Server 2",
-            "x": 513.79,
-            "y": 307.22,
-            "cpu": 8,
-            "ram": 4,
-            "tier": 1
         }
     ],
     "relays": [
         {
             "name": "Relay 1",
-            "x": 98.54,
-            "y": 395.03,
+            "x": 513.79,
+            "y": 307.22,
             "cpu": 2,
             "ram": 2
         },
         {
             "name": "Relay 2",
-            "x": 417.63,
-            "y": 90.75,
+            "x": 98.54,
+            "y": 395.03,
             "cpu": 2,
             "ram": 2
         }
@@ -42,116 +34,116 @@
     "users": [
         {
             "name": "User 1",
-            "x": 48.76,
-            "y": 999.18,
-            "ddl": 31.64,
-            "data": 753.33,
+            "x": 408.47,
+            "y": 45.28,
+            "ddl": 34.49,
+            "data": 1326.96,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
-                    "reward": 11,
-                    "time": 15.61
+                    "reward": 6,
+                    "time": 12.13
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 5,
-                    "time": 7.67
+                    "time": 6.54
                 }
             ]
         },
         {
             "name": "User 2",
-            "x": 676.69,
-            "y": 60.8,
-            "ddl": 25.72,
-            "data": 1110.68,
+            "x": 392.4,
+            "y": 493.02,
+            "ddl": 26.22,
+            "data": 902.4,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
-                    "reward": 7,
-                    "time": 16.23
+                    "reward": 9,
+                    "time": 14.81
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
-                    "reward": 3,
-                    "time": 9.49
+                    "reward": 5,
+                    "time": 11.66
                 }
             ]
         },
         {
             "name": "User 3",
-            "x": 872.2,
-            "y": 18.52,
-            "ddl": 22.26,
-            "data": 1004.14,
+            "x": 227.32,
+            "y": 895.45,
+            "ddl": 24.12,
+            "data": 965.37,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
-                    "ram": 2,
+                    "ram": 1,
                     "reward": 8,
-                    "time": 11.86
+                    "time": 14.89
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 4,
-                    "time": 7.29
+                    "time": 9.21
                 }
             ]
         },
         {
             "name": "User 4",
-            "x": 149.04,
-            "y": 698.51,
-            "ddl": 37.02,
-            "data": 1143.32,
+            "x": 806.22,
+            "y": 316.45,
+            "ddl": 31.35,
+            "data": 778.13,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
-                    "ram": 1,
-                    "reward": 8,
-                    "time": 11.69
+                    "ram": 2,
+                    "reward": 9,
+                    "time": 9.01
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 6,
-                    "time": 7.8
+                    "time": 7.64
                 }
             ]
         },
         {
             "name": "User 5",
-            "x": 399.43,
-            "y": 936.44,
-            "ddl": 38.69,
-            "data": 1113.64,
+            "x": 367.88,
+            "y": 951.02,
+            "ddl": 28.01,
+            "data": 831.91,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 3,
                     "reward": 9,
-                    "time": 17.53
+                    "time": 22.3
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
-                    "reward": 4,
-                    "time": 9.86
+                    "reward": 6,
+                    "time": 11.68
                 }
             ]
         }
