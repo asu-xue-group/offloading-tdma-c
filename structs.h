@@ -37,12 +37,11 @@ struct USER {
 
 
 struct OPT {
-//    int mn;         // this user is assigned to server m, mn=0 means we skip this user.
-//    int kn;         // this user is assigned to accuracy k
-//    int slot;       // the number of time slots assigned to this user.
-    unsigned short solution; // the "multiplexed" solution
-    unsigned short slot;     // the number of time slots assigned to this user.
+//    unsigned char mn;         // this user is assigned to server m, mn=0 means we skip this user.
+//    unsigned char kn;         // this user is assigned to accuracy k
     unsigned short reward;     // the corresponding optimal value
+    unsigned char solution;   // multiplexed server and accuracy
+    unsigned char slot;      // the number of time slots assigned to this user
 };
 
 struct TIMING {

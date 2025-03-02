@@ -78,21 +78,37 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     }
 }
 
-unsigned short mux_solution(int server, int tier) {
-    if (server > 655) {
-        std::cerr << "Server number is " << server << " out of max 655" << std::endl;
+unsigned char mux_solution(int server, int tier) {
+    if (server > 55) {
+        std::cerr << "Server number is " << server << " out of max 55" << std::endl;
     }
-    if (tier > 35) {
-        std::cerr << "Tier number is " << tier << " out of max 35" << std::endl;
+    if (tier > 2) {
+        std::cerr << "Tier number is " << tier << " out of max 2" << std::endl;
     }
-    return server * 100 + tier;
+    return tier * 100 + server;
 }
 
-std::tuple<int, int> demux_solution(unsigned short solution) {
-    int server = solution / 100;
-    int tier = solution % 100;
+std::tuple<int, int> demux_solution(unsigned char solution) {
+    int tier = solution / 100;
+    int server = solution % 100;
     return {server, tier};
 }
+//
+//unsigned short mux_solution2(int reward, int slot) {
+//    if (reward > 655) {
+//        std::cerr << "Reward number is " << reward << " out of max 655" << std::endl;
+//    }
+//    if (slot > 35) {
+//        std::cerr << "Slot number is " << slot << " out of max 35" << std::endl;
+//    }
+//    return reward * 100 + slot;
+//}
+//
+//std::tuple<int, int> demux_solution2(unsigned short solution) {
+//    int reward = solution / 100;
+//    int slot = solution % 100;
+//    return {reward, slot};
+//}
 
 long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
     int C[M + L + 1];

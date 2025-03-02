@@ -222,6 +222,7 @@ int main(int argc, char **argv) {
         table_size = table_size * (1 + s[m].cpu) * (1 + s[m].ram);
     }
     table_size = table_size * (1 + T) * (1 + N);
+    std::cout << std::format("Table size: {}\n", table_size) << std::endl;
     opt = new OPT[table_size];
 
     // Find the optimal X
@@ -234,7 +235,6 @@ int main(int argc, char **argv) {
 
     std::cout << std::format("Preprocessing took {} seconds\n",
                              std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0) << std::endl;
-    std::cout << std::format("Table size: {}\n", table_size) << std::endl;
 
     int best_reward = 0, best_X = 0;
     std::vector<std::vector<int>> best_results;

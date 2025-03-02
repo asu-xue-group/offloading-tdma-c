@@ -152,7 +152,7 @@ void dp(int mode) {
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(m_opt, k_opt);
                 opt[next_idx].solution = solution;
-                opt[next_idx].slot = static_cast<unsigned short>(slot_opt);
+                opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
                 opt[next_idx].reward = static_cast<unsigned short>(reward);
             }
         }
