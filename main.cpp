@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
     std::vector<std::vector<int>> best_results;
 
     // Iterate through the possible X values to determine which one gives the best outcome
-    for (int x = 13; x <= 13; x++) {
+    for (int x = 0; x <= X_ub; x++) {
         X = x;
         // Update timing info after x changes
         for (int n = 1; n <= N; n++) {
