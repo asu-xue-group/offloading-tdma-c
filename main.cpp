@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <regex>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 #include "global.h"
 #include "knapsack.hpp"
@@ -27,17 +28,75 @@ std::vector<std::vector<TIMING *>> timing;
 int K, M, L, N;
 long long table_size;
 
+
+std::vector<std::vector<int>> test_x(int x, int flag, const fs::path& p, const std::string& mode_str) {
+    X = x;
+    // Update timing info after x changes
+    for (int n = 1; n <= N; n++) {
+        for (int m = 1; m <= M; m++) {
+            // Using relay
+            int l = timing.at(n).at(m)->relay;
+            if (l > 0) {
+                double snr_ur_result = snr_ur(l, n);
+                double snr_rs_result = snr_rs(l, m);
+                int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
+                int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
+                int used_T = ur_time + rs_time;
+                timing.at(n).at(m)->T = used_T;
+                timing.at(n).at(m)->ur_time = ur_time;
+                timing.at(n).at(m)->rs_time = rs_time;
+            } else if(l == 0) { // Direct connection
+                double snr_result = snr(m, n);
+                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
+                timing.at(n).at(m)->T = used_T;
+            }
+        }
+    }
+
+    auto begin = std::chrono::steady_clock::now();
+    std::cout << "Calculating for X = " << X << std::endl;
+    dp(flag);
+    auto end = std::chrono::steady_clock::now();
+    auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
+
+    auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
+                                                  mode_str, x, T, lambda);
+
+    auto solution = trace_solution(opt, flag, N);
+
+    print_to_file(out_path.string(), solution, time_delta);
+//    std::cout << std::format("Time taken: {} seconds", time_delta) << std::endl;
+//    std::cout << std::format("Optimal value: {}\n", solution.back().back()) << std::endl;
+//    std::cout << std::endl;
+
+    return solution;
+}
+
+std::vector<std::vector<int>> get_or_calculate(std::unordered_map<int, std::vector<std::vector<int>>>& cache,
+                                               int x, int flag, const fs::path& p, const std::string& mode_str) {
+    if (cache.find(x) == cache.end()) {
+        auto sol = test_x(x, flag, p, mode_str);
+        cache[x] = sol;
+        return sol;
+    } else {
+        std::cout << "Retrieving " << x << " from cache\n";
+        return cache.at(x);
+    }
+}
+
+
 int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();
-    int flag;
+    int flag, bisection;
     double min_time = INT_MAX, max_time = 0; // minimum and maximum transmission time
 
     // Check commandline arguments
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <ifile> <flag>\n", argv[0]);
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <ifile> <flag> <bisection>\n", argv[0]);
         exit(1);
     }
     flag = std::stoi(argv[2]);
+    bisection = std::stoi(argv[3]);
     std::ifstream is(argv[1]);
     json j = json::parse(is);
 
@@ -239,53 +298,44 @@ int main(int argc, char **argv) {
     int best_reward = 0, best_X = 0;
     std::vector<std::vector<int>> best_results;
 
-    // Iterate through the possible X values to determine which one gives the best outcome
-    for (int x = 0; x <= X_ub; x++) {
-        X = x;
-        // Update timing info after x changes
-        for (int n = 1; n <= N; n++) {
-            for (int m = 1; m <= M; m++) {
-                // Using relay
-                int l = timing.at(n).at(m)->relay;
-                if (l > 0) {
-                    double snr_ur_result = snr_ur(l, n);
-                    double snr_rs_result = snr_rs(l, m);
-                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
-                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
-                    int used_T = ur_time + rs_time;
-                    timing.at(n).at(m)->T = used_T;
-                    timing.at(n).at(m)->ur_time = ur_time;
-                    timing.at(n).at(m)->rs_time = rs_time;
-                } else if(l == 0) { // Direct connection
-                    double snr_result = snr(m, n);
-                    int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
-                    timing.at(n).at(m)->T = used_T;
-                }
+    // Assume the function is "concave"
+    if (bisection)
+    {
+        // New trinary search method to pick the optimal X
+        int curr_lb = 0, curr_ub = X_ub;
+        // Cache results to avoid recomputation
+        std::unordered_map<int,std::vector<std::vector<int>>> cache;
+        while (curr_ub - curr_lb >= 3) {
+            int mid1 = curr_lb + (curr_ub - curr_lb) / 3;
+            int mid2 = curr_ub - (curr_ub - curr_lb) / 3;
+            auto solution1 = get_or_calculate(cache, mid1, flag, p, mode_str);
+            auto solution2 = get_or_calculate(cache, mid2, flag, p, mode_str);
+
+            if (solution1.back().back() > solution2.back().back()) {
+                curr_ub = mid2;
+            } else {
+                curr_lb = mid1;
             }
         }
 
-        auto begin = std::chrono::steady_clock::now();
-        std::cout << "Calculating for X = " << X << std::endl;
-        dp(flag);
-        end = std::chrono::steady_clock::now();
-        auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
-
-        auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
-                                                      mode_str, x, T, lambda);
-
-        auto solution = trace_solution(opt, flag, N);
-
-        if (solution.back().back() > best_reward) {
-            best_reward = solution.back().back();
-            best_X = x;
-            best_results = solution;
+        for (int x = curr_lb; x <= curr_ub; x++) {
+            auto solution = get_or_calculate(cache, x, flag, p, mode_str);
+            if (solution.back().back() > best_reward) {
+                best_reward = solution.back().back();
+                best_X = x;
+                best_results = solution;
+            }
         }
-
-        print_to_file(out_path.string(), solution, time_delta);
-        std::cout << std::format("Time taken: {} seconds", time_delta) << std::endl;
-        std::cout << std::format("Optimal value: {}\n", solution.back().back()) << std::endl;
-        std::cout << std::endl;
-
+    } else {
+        // Iterate through the possible X values to determine which one gives the best outcome
+        for (int x = 0; x <= X_ub; x++) {
+            auto solution = test_x(x, flag, p, mode_str);
+            if (solution.back().back() > best_reward) {
+                best_reward = solution.back().back();
+                best_X = x;
+                best_results = solution;
+            }
+        }
     }
 
     std::string tc_num = std::regex_replace(
@@ -293,9 +343,9 @@ int main(int argc, char **argv) {
             std::regex("[^0-9]*([0-9]+).*"),
             std::string("$1")
     );
-    end = std::chrono::steady_clock::now();
+    auto end_overall = std::chrono::steady_clock::now();
     result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
-                  std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0, table_size);
+                  std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0, table_size);
 
 #ifdef print_solution
     print_results(solution, N);
