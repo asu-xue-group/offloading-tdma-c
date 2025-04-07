@@ -122,4 +122,22 @@ long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
     return indexue(n, t, C, R);
 }
 
+// Calculate the delay for a user-server pair
+// When m == 0, it means the user is not assigned to any server (local processing)
+// When m == 0 and k == 0, it means the user is not scheduled at all
+double calc_delay(int n, int m, int k) {
+    auto exec_time = u[n].tier[k].time;
+    auto ddl = u[n].ddl;
+    if (m == 0) {
+        return std::max(0.0, static_cast<double>(exec_time - ddl));
+    }
+    return std::max(0.0, exec_time + X * z * T - ddl);
+}
+
+// Exponential decay function
+double calc_reward(int n, int k, double delay) {
+    return u[n].tier[k].reward * std::pow(M_E, -decay * delay);
+}
+
+
 #endif

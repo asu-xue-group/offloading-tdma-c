@@ -28,6 +28,8 @@ struct TIER {
 
 struct USER {
     int index;      // index of the user, starting from 1...
+    float cpu;         // locally available CPU on user
+    float ram;         // locally available RAM on user
     float x;          // x coordinate of the user
     float y;          // y coordinate of the user
     float ddl;        // deadline
@@ -39,9 +41,9 @@ struct USER {
 struct OPT {
 //    unsigned char mn;         // this user is assigned to server m, mn=0 means we skip this user.
 //    unsigned char kn;         // this user is assigned to accuracy k
-    unsigned short reward;     // the corresponding optimal value
     unsigned char solution;   // multiplexed server and accuracy
     unsigned char slot;      // the number of time slots assigned to this user
+    float reward;     // the corresponding optimal value
 };
 
 struct TIMING {

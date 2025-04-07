@@ -38,13 +38,13 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 }
 
 
-std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
-    auto val = 0;
+std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
+    auto val = 0.0f;
     if (n > 1) {
         val = opt[get_idx(n - 1, t, combo, mode)].reward;
     }
     int m_opt = 0;
-    int k_opt = 1;
+    int k_opt = 0;
     int slot_opt = 0;
 
     // Edge case where everything is zero
@@ -53,7 +53,7 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
     }
 
     // Iterate over all servers
-    for (int m = 1; m <= M + L; m++) {
+    for (int m = 0; m <= M + L; m++) {
         int required_T;
         // Special calculation for relay servers
         if (m > M) {
@@ -63,12 +63,14 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
             }
             required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
         } else {
-            // Obtain pre-calculated SNR and timeslot info
-            TIMING* curr = timing.at(n).at(m);
-            if (curr->relay == -1) {
-                continue;
+            if (m != 0) {
+                // Obtain pre-calculated SNR and timeslot info
+                TIMING *curr = timing.at(n).at(m);
+                if (curr->relay == -1) {
+                    continue;
+                }
+                required_T = curr->T;
             }
-            required_T = curr->T;
         }
         // Catch the case of infinity
         if (required_T <= 0) {
@@ -77,33 +79,44 @@ std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &co
 
         // Iterate over offloading tiers
         for (int k = 1; k <= K; k++) {
-            // Check the remaining cpu, ram, timeslot
-            auto new_combo = combo;
-            update_combo(new_combo, n, m, k, mode);
-            // Check the timeslot
-            auto new_t = t - required_T;
+            auto prev_opt = 0.0f;
+            // Local processing
+            if (m == 0) {
+                if (u[n].cpu < static_cast<float>(u[n].tier[k].cpu) || u[n].ram < static_cast<float>(u[n].tier[k].ram)) {
+                    continue;
+                }
+                if (n > 1) {
+                    prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
+                }
+            } else {
+                // Check the remaining cpu, ram, timeslot
+                auto new_combo = combo;
+                update_combo(new_combo, n, m, k, mode);
+                // Check the timeslot
+                auto new_t = t - required_T;
 
-            // Check if resources are available
-            if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
-                continue;
-            }
-
-            // Check the deadline
-            if (X * T * z <= u[n].ddl - u[n].tier[k].time) {
-                // Calculate the rewards of the current tier
-                auto prev_opt = 0;
+                // Check if resources are available
+                if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
+                    continue;
+                }
                 if (n > 1) {
                     prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
                 }
-                auto reward = u[n].tier[k].reward + prev_opt;
-
-                if (reward > val) {
-                    val = reward;
-                    m_opt = m;
-                    k_opt = k;
-                    slot_opt = required_T;
-                }
             }
+//                // Check the deadline
+//                if (X * T * z <= u[n].ddl - u[n].tier[k].time) {
+                // Calculate the rewards of the current tier
+
+            auto delay = calc_delay(n, m, k);
+            auto reward = calc_reward(n, k, delay) + prev_opt;
+
+            if (reward > val) {
+                val = static_cast<float>(reward);
+                m_opt = m;
+                k_opt = k;
+                slot_opt = required_T;
+            }
+
         }
     }
 
@@ -153,7 +166,7 @@ void dp(int mode) {
                 auto solution = mux_solution(m_opt, k_opt);
                 opt[next_idx].solution = solution;
                 opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
-                opt[next_idx].reward = static_cast<unsigned short>(reward);
+                opt[next_idx].reward = reward;
             }
         }
 

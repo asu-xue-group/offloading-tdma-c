@@ -4,11 +4,12 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <variant>
 #include "subs.hpp"
 
 extern std::vector<std::vector<TIMING *>> timing;
 
-void print_to_file(const std::string &filename, const std::vector<std::vector<int>> &solution, double time) {
+void print_to_file(const std::string &filename, const std::vector<std::vector<std::variant<int, float>>> &solution, double time) {
     FILE *fp = fopen(filename.c_str(), "w");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.c_str());
@@ -17,22 +18,31 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
 
     // o[0] = user index, o[1] = server index, o[2] = algo index, o[3] = timeslots allocated, o[4] = reward
     fprintf(fp, "T=%d, lambda=%d\n", T, lambda);
-    fprintf(fp, "Optimal value: %d\n", solution.back().back());
+    fprintf(fp, "Optimal value: %f\n", std::get<float>(solution.back().back()));
     fprintf(fp, "Optimal solution:\n");
     for (const auto &o: solution) {
-        if (o[1] == 0) {
-            fprintf(fp, "User %d is not assigned to any server\n", o[0]);
-        } else if (o[1] <= M) {
-            if (timing.at(o[0]).at(o[1])->relay == 0) {
+        auto o0 = std::get<int>(o[0]);
+        auto o1 = std::get<int>(o[1]);
+        auto o2 = std::get<int>(o[2]);
+        auto o3 = std::get<int>(o[3]);
+
+        if (o1 == 0) {
+            if (o2 == 0) {
+                fprintf(fp, "User %d is not scheduled\n", o0);
+            } else {
+                fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
+            }
+        } else if (o1 <= M) {
+            if (timing.at(o0).at(o1)->relay == 0) {
                 fprintf(fp, "User %d is assigned to server %d with algo %d (direct connection), and is assigned %d time slots\n",
-                        o[0], o[1], o[2], o[3]);
+                        o0, o1, o2, o3);
             } else {
                 fprintf(fp, "User %d is assigned to server %d with algo %d, via relay %d, and is assigned %d time slots\n",
-                        o[0], o[1], o[2], timing.at(o[0]).at(o[1])->relay, o[3]);
+                        o0, o1, o2, timing.at(o0).at(o1)->relay, o3);
             }
         } else {
             fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots\n",
-                    o[0], o[1] - M, o[2], o[3]);
+                    o0, o1 - M, o2, o3);
         }
     }
     fprintf(fp, "Time taken: %.4f seconds\n", time);
@@ -40,14 +50,14 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<in
     fclose(fp);
 }
 
-void result_to_csv(const std::filesystem::path& filename, const std::string& flag, int tc_num, int x, int _lambda, int reward, double time, long long table_size) {
+void result_to_csv(const std::filesystem::path& filename, const std::string& flag, int tc_num, int x, int _lambda, float reward, double time, long long table_size) {
     FILE *fp = fopen(filename.string().c_str(), "a");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());
         exit(0);
     }
 
-    fprintf(fp, "%s,%d,%d,%d,%d,%.4f,%lld\n", flag.c_str(), tc_num, x, _lambda, reward, time, table_size);
+    fprintf(fp, "%s,%d,%d,%d,%.4f,%.4f,%lld\n", flag.c_str(), tc_num, x, _lambda, reward, time, table_size);
     fclose(fp);
 }
 
@@ -62,8 +72,8 @@ void print_results(const std::vector<std::vector<int>> &solution, int n) {
 }
 
 
-std::vector<std::vector<int>> trace_solution(OPT *opt, int flag, int num_user) {
-    std::vector<std::vector<int>> solution(num_user);
+std::vector<std::vector<std::variant<int, float>>> trace_solution(OPT *opt, int flag, int num_user) {
+    std::vector<std::vector<std::variant<int, float>>> solution(num_user);
     int curr_t = T;
     auto curr_combo = std::vector<int>();
     curr_combo.push_back(0);
@@ -78,7 +88,7 @@ std::vector<std::vector<int>> trace_solution(OPT *opt, int flag, int num_user) {
         auto reward = opt[index].reward;
         auto slot_opt = opt[index].slot;
         auto [m_opt, k_opt] = demux_solution(sol);
-        solution.at(n - 1) = std::vector<int>{n, m_opt, k_opt, slot_opt, reward};
+        solution.at(n - 1) = std::vector<std::variant<int, float>>{n, m_opt, k_opt, slot_opt, reward};
         if (m_opt == 0) {
             continue;
         }

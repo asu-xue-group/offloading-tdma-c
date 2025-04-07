@@ -29,7 +29,7 @@ int K, M, L, N;
 long long table_size;
 
 
-std::vector<std::vector<int>> test_x(int x, int flag, const fs::path& p, const std::string& mode_str) {
+std::vector<std::vector<std::variant<int, float>>> test_x(int x, int flag, const fs::path& p, const std::string& mode_str) {
     X = x;
     // Update timing info after x changes
     for (int n = 1; n <= N; n++) {
@@ -72,7 +72,7 @@ std::vector<std::vector<int>> test_x(int x, int flag, const fs::path& p, const s
     return solution;
 }
 
-std::vector<std::vector<int>> get_or_calculate(std::unordered_map<int, std::vector<std::vector<int>>>& cache,
+std::vector<std::vector<std::variant<int, float>>> get_or_calculate(std::unordered_map<int, std::vector<std::vector<std::variant<int, float>>>>& cache,
                                                int x, int flag, const fs::path& p, const std::string& mode_str) {
     if (cache.find(x) == cache.end()) {
         auto sol = test_x(x, flag, p, mode_str);
@@ -188,6 +188,8 @@ int main(int argc, char **argv) {
         u[n].y = j["users"][n - 1]["y"];
         u[n].ddl = j["users"][n - 1]["ddl"];
         u[n].data = j["users"][n - 1]["data"];
+        u[n].cpu = j["users"][n - 1]["local_cpu"];
+        u[n].ram = j["users"][n - 1]["local_ram"];
 
         u[n].tier[1].tier = 1;
         u[n].tier[1].cpu = j["users"][n - 1]["tiers"][0]["cpu"];
@@ -295,8 +297,9 @@ int main(int argc, char **argv) {
     std::cout << std::format("Preprocessing took {} seconds\n",
                              std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0) << std::endl;
 
-    int best_reward = 0, best_X = 0;
-    std::vector<std::vector<int>> best_results;
+    float best_reward = 0;
+    int best_X = 0;
+    std::vector<std::vector<std::variant<int, float>>> best_results;
 
     // Assume the function is "concave"
     if (bisection)
@@ -304,7 +307,7 @@ int main(int argc, char **argv) {
         // New trinary search method to pick the optimal X
         int curr_lb = 0, curr_ub = X_ub;
         // Cache results to avoid recomputation
-        std::unordered_map<int,std::vector<std::vector<int>>> cache;
+        std::unordered_map<int,std::vector<std::vector<std::variant<int, float>>>> cache;
         while (curr_ub - curr_lb >= 3) {
             int mid1 = curr_lb + (curr_ub - curr_lb) / 3;
             int mid2 = curr_ub - (curr_ub - curr_lb) / 3;
@@ -320,8 +323,9 @@ int main(int argc, char **argv) {
 
         for (int x = curr_lb; x <= curr_ub; x++) {
             auto solution = get_or_calculate(cache, x, flag, p, mode_str);
-            if (solution.back().back() > best_reward) {
-                best_reward = solution.back().back();
+            auto reward = std::get<float>(solution.back().back());
+            if (reward > best_reward) {
+                best_reward = reward;
                 best_X = x;
                 best_results = solution;
             }
@@ -330,8 +334,9 @@ int main(int argc, char **argv) {
         // Iterate through the possible X values to determine which one gives the best outcome
         for (int x = 0; x <= X_ub; x++) {
             auto solution = test_x(x, flag, p, mode_str);
-            if (solution.back().back() > best_reward) {
-                best_reward = solution.back().back();
+            auto reward = std::get<float>(solution.back().back());
+            if (reward > best_reward) {
+                best_reward = reward;
                 best_X = x;
                 best_results = solution;
             }

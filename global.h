@@ -11,5 +11,6 @@ int lambda = 5;
 int T = 40;                // number of timeslots in each frame
 int X = 128;                // total number of frames
 double z = 0.025;       // duration of each timeslot = 1/X
+double decay = 0.9;
 
 #endif
