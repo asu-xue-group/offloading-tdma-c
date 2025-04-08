@@ -25,6 +25,7 @@ USER *u;
 OPT *opt;
 std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
 std::vector<std::vector<TIMING *>> timing;
+std::unordered_map<std::string, std::vector<double>> penalized;
 int K, M, L, N;
 long long table_size;
 

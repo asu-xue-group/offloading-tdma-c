@@ -8,6 +8,7 @@
 #include "subs.hpp"
 
 extern std::vector<std::vector<TIMING *>> timing;
+extern std::unordered_map<std::string, std::vector<double>> penalized;
 
 void print_to_file(const std::string &filename, const std::vector<std::vector<std::variant<int, float>>> &solution, double time) {
     FILE *fp = fopen(filename.c_str(), "w");
@@ -26,6 +27,13 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
         auto o2 = std::get<int>(o[2]);
         auto o3 = std::get<int>(o[3]);
 
+        auto index_str = std::format("{}_{}_{}", o0, o1, o2);
+        std::string penalty_string;
+        if (penalized.contains(index_str)) {
+            auto delay = penalized.at(index_str).at(0);
+            auto reward_pct = penalized.at(index_str).at(1);
+            penalty_string = std::format("(delay: {:.2f}, reward: {:.0f}%)", delay, reward_pct * 100);
+        }
         if (o1 == 0) {
             if (o2 == 0) {
                 fprintf(fp, "User %d is not scheduled\n", o0);
@@ -33,16 +41,20 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
                 fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
             }
         } else if (o1 <= M) {
+
             if (timing.at(o0).at(o1)->relay == 0) {
-                fprintf(fp, "User %d is assigned to server %d with algo %d (direct connection), and is assigned %d time slots\n",
-                        o0, o1, o2, o3);
+                fprintf(fp,
+                        "User %d is assigned to server %d with algo %d (direct connection), and is assigned %d time slots %s\n",
+                        o0, o1, o2, o3, penalty_string.c_str());
+
             } else {
-                fprintf(fp, "User %d is assigned to server %d with algo %d, via relay %d, and is assigned %d time slots\n",
-                        o0, o1, o2, timing.at(o0).at(o1)->relay, o3);
+                fprintf(fp,
+                        "User %d is assigned to server %d with algo %d, via relay %d, and is assigned %d time slots %s\n",
+                        o0, o1, o2, timing.at(o0).at(o1)->relay, o3, penalty_string.c_str());
             }
         } else {
-            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots\n",
-                    o0, o1 - M, o2, o3);
+            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots %s\n",
+                    o0, o1 - M, o2, o3, penalty_string.c_str());
         }
     }
     fprintf(fp, "Time taken: %.4f seconds\n", time);

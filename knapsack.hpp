@@ -16,6 +16,7 @@ extern OPT *opt;
 extern long long table_size;
 
 
+
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
     std::vector<int> sequence = sequences[index];
@@ -108,13 +109,20 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 // Calculate the rewards of the current tier
 
             auto delay = calc_delay(n, m, k);
-            auto reward = calc_reward(n, k, delay) + prev_opt;
+            auto curr_reward = calc_reward(n, k, delay);
+            auto reward = curr_reward + prev_opt;
 
             if (reward > val) {
                 val = static_cast<float>(reward);
                 m_opt = m;
                 k_opt = k;
                 slot_opt = required_T;
+
+                // If the entry is penalized due to delay, add it to the database
+                auto index_str = std::format("{}_{}_{}", n, m, k);
+                if (delay > 0.0f) {
+                    penalized[index_str] = {delay, curr_reward / u[n].tier[k].reward};
+                }
             }
 
         }
