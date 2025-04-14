@@ -1,272 +1,285 @@
 {
-    "name": "medium_14",
+    "name": "medium_4",
     "num_user": 10,
-    "num_server": 2,
-    "num_relay": 2,
+    "num_server": 3,
+    "num_relay": 0,
     "num_server_tier": 2,
     "num_user_tier": 2,
     "servers": [
         {
             "name": "Server 1",
-            "x": 1595.77,
-            "y": 749.7,
+            "x": 1797.5,
+            "y": 1020.39,
             "cpu": 10,
             "ram": 8,
             "tier": 1
         },
         {
             "name": "Server 2",
-            "x": 1364.93,
-            "y": 1648.21,
-            "cpu": 4,
-            "ram": 4,
-            "tier": 2
-        }
-    ],
-    "relays": [
-        {
-            "name": "Relay 1",
-            "x": 1254.37,
-            "y": 1087.05,
-            "cpu": 2,
-            "ram": 2
+            "x": 1857.24,
+            "y": 245.5,
+            "cpu": 10,
+            "ram": 8,
+            "tier": 1
         },
         {
-            "name": "Relay 2",
-            "x": 1472.16,
-            "y": 1389.37,
-            "cpu": 2,
-            "ram": 2
+            "name": "Server 3",
+            "x": 1193.24,
+            "y": 777.68,
+            "cpu": 10,
+            "ram": 8,
+            "tier": 1
         }
     ],
+    "relays": [],
     "users": [
         {
             "name": "User 1",
-            "x": 934.34,
-            "y": 1144.92,
-            "ddl": 45.91,
-            "data": 824.62,
-            "tiers": [
-                {
-                    "tier": 1,
-                    "cpu": 4,
-                    "ram": 2,
-                    "reward": 12,
-                    "time": 14.66
-                },
-                {
-                    "tier": 2,
-                    "cpu": 2,
-                    "ram": 1,
-                    "reward": 4,
-                    "time": 10.67
-                }
-            ]
-        },
-        {
-            "name": "User 2",
-            "x": 1942.57,
-            "y": 597.43,
-            "ddl": 40.16,
-            "data": 1042.27,
+            "x": 1603.8,
+            "y": 349.06,
+            "ddl": 13.57,
+            "data": 1048.35,
+            "local_cpu": 1.99,
+            "local_ram": 1.22,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
                     "reward": 9,
-                    "time": 16.24
+                    "time": 10.52
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
-                    "reward": 6,
-                    "time": 6.68
+                    "reward": 4,
+                    "time": 8.69
+                }
+            ]
+        },
+        {
+            "name": "User 2",
+            "x": 1885.61,
+            "y": 1331.31,
+            "ddl": 19.56,
+            "data": 1296.51,
+            "local_cpu": 1.17,
+            "local_ram": 0.9,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 9,
+                    "time": 8.65
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 5,
+                    "time": 7.03
                 }
             ]
         },
         {
             "name": "User 3",
-            "x": 316.48,
-            "y": 58.93,
-            "ddl": 34.71,
-            "data": 995.75,
+            "x": 1164.03,
+            "y": 535.67,
+            "ddl": 24.03,
+            "data": 1191.84,
+            "local_cpu": 1.51,
+            "local_ram": 0.74,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
-                    "reward": 8,
-                    "time": 11.98
+                    "reward": 9,
+                    "time": 17.55
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
-                    "reward": 5,
-                    "time": 11.71
+                    "reward": 4,
+                    "time": 8.4
                 }
             ]
         },
         {
             "name": "User 4",
-            "x": 1647.78,
-            "y": 1464.62,
-            "ddl": 28.19,
-            "data": 1273.05,
+            "x": 1925.01,
+            "y": 1768.45,
+            "ddl": 19.47,
+            "data": 1411.62,
+            "local_cpu": 1.7,
+            "local_ram": 0.84,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
                     "reward": 6,
-                    "time": 15.97
+                    "time": 13.89
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 5,
-                    "time": 12.86
+                    "time": 10.34
                 }
             ]
         },
         {
             "name": "User 5",
-            "x": 1377.76,
-            "y": 1991.93,
-            "ddl": 22.97,
-            "data": 1040.79,
+            "x": 614.72,
+            "y": 1614.1,
+            "ddl": 24.24,
+            "data": 1034.64,
+            "local_cpu": 1.89,
+            "local_ram": 0.96,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
                     "reward": 10,
-                    "time": 13.14
+                    "time": 12.67
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
-                    "reward": 5,
-                    "time": 6.95
+                    "reward": 7,
+                    "time": 9.73
                 }
             ]
         },
         {
             "name": "User 6",
-            "x": 1896.94,
-            "y": 646.18,
-            "ddl": 22.94,
-            "data": 754.62,
+            "x": 142.84,
+            "y": 1400.17,
+            "ddl": 18.68,
+            "data": 1212.42,
+            "local_cpu": 1.57,
+            "local_ram": 0.85,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
-                    "ram": 2,
-                    "reward": 8,
-                    "time": 14.29
-                },
-                {
-                    "tier": 2,
-                    "cpu": 2,
                     "ram": 1,
                     "reward": 5,
-                    "time": 8.93
-                }
-            ]
-        },
-        {
-            "name": "User 7",
-            "x": 1342.94,
-            "y": 303.19,
-            "ddl": 37.93,
-            "data": 905.85,
-            "tiers": [
-                {
-                    "tier": 1,
-                    "cpu": 4,
-                    "ram": 2,
-                    "reward": 8,
-                    "time": 11.22
-                },
-                {
-                    "tier": 2,
-                    "cpu": 2,
-                    "ram": 1,
-                    "reward": 6,
-                    "time": 8.31
-                }
-            ]
-        },
-        {
-            "name": "User 8",
-            "x": 1144.51,
-            "y": 925.51,
-            "ddl": 36.91,
-            "data": 1243.17,
-            "tiers": [
-                {
-                    "tier": 1,
-                    "cpu": 4,
-                    "ram": 2,
-                    "reward": 5,
-                    "time": 13.96
+                    "time": 12.07
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 4,
-                    "time": 9.49
+                    "time": 7.04
                 }
             ]
         },
         {
-            "name": "User 9",
-            "x": 921.76,
-            "y": 784.85,
-            "ddl": 28.68,
-            "data": 629.9,
+            "name": "User 7",
+            "x": 1335.18,
+            "y": 974.71,
+            "ddl": 19.99,
+            "data": 859.5,
+            "local_cpu": 2.4,
+            "local_ram": 0.93,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
                     "ram": 2,
-                    "reward": 6,
-                    "time": 16.56
+                    "reward": 10,
+                    "time": 16.55
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 5,
-                    "time": 9.97
+                    "time": 9.76
                 }
             ]
         },
         {
-            "name": "User 10",
-            "x": 92.15,
-            "y": 483.64,
-            "ddl": 32.92,
-            "data": 936.07,
+            "name": "User 8",
+            "x": 1478.9,
+            "y": 365.96,
+            "ddl": 21.46,
+            "data": 1159.77,
+            "local_cpu": 1.68,
+            "local_ram": 1.0,
             "tiers": [
                 {
                     "tier": 1,
                     "cpu": 4,
-                    "ram": 2,
-                    "reward": 9,
-                    "time": 19.11
+                    "ram": 1,
+                    "reward": 10,
+                    "time": 15.27
                 },
                 {
                     "tier": 2,
                     "cpu": 2,
                     "ram": 1,
                     "reward": 6,
-                    "time": 8.81
+                    "time": 10.23
+                }
+            ]
+        },
+        {
+            "name": "User 9",
+            "x": 1697.09,
+            "y": 682.81,
+            "ddl": 13.18,
+            "data": 1331.11,
+            "local_cpu": 1.83,
+            "local_ram": 0.91,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 3,
+                    "reward": 11,
+                    "time": 15.35
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 6,
+                    "time": 13.36
+                }
+            ]
+        },
+        {
+            "name": "User 10",
+            "x": 1267.83,
+            "y": 1541.53,
+            "ddl": 24.9,
+            "data": 1053.91,
+            "local_cpu": 2.2,
+            "local_ram": 1.02,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 7,
+                    "time": 7.08
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 4,
+                    "time": 6.97
                 }
             ]
         }
@@ -279,7 +292,7 @@
     "N": 3e-10,
     "T": 20,
     "t0": 10,
-    "P_max": 10,
-    "B": 13.33,
-    "B_total": 40
+    "P_max": 5,
+    "B": 10.0,
+    "B_total": 30
 }

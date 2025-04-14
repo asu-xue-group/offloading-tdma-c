@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
 
         // Calculate the minimum and maximum transmission time
         if (u[n].ddl - u[n].tier[2].time > max_time) {
-            max_time = u[n].ddl - u[n].tier[2].time;
+            max_time = u[n].ddl;
         }
         if (u[n].ddl - u[n].tier[1].time < min_time) {
             min_time = u[n].ddl - u[n].tier[1].time;
