@@ -111,5 +111,12 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-tdma_knapsack
+# Make related files
 Makefile
+_deps/
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+tdma_knapsack
+test_archive/
