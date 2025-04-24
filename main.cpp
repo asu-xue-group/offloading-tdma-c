@@ -288,54 +288,84 @@ int main(int argc, char **argv) {
     // Lower bound should satisfy the minimum time requirement
     // Upper bound should not exceed the maximum time requirement
 //    int X_lb = std::ceil(min_time / (X * z));
-    int X_ub = std::ceil(max_time / (X * z));
+//    int X_ub = std::ceil(max_time / (X * z));
+    int X_ub = 0;
+    for (int n = 1; n <= N; n++) {
+        for (int k = 1; k <= K; k++) {
+            int slots = std::floor((u[n].ddl - std::log(ret_ratio) / decay - u[n].tier[k].time) / (z * T));
+            if (slots > X_ub) {
+                X_ub = slots;
+            }
+        }
+    }
 
+    std::cout << std::format("X upper bound: {}\n", X_ub) << std::endl;
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
     std::cout << std::format("Preprocessing took {} seconds\n",
                              std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0) << std::endl;
 
     int best_reward = 0, best_X = 0;
     std::vector<std::vector<int>> best_results;
 
-    // Assume the function is "concave"
-    if (bisection)
-    {
-        // New trinary search method to pick the optimal X
-        int curr_lb = 0, curr_ub = X_ub;
-        // Cache results to avoid recomputation
-        std::unordered_map<int,std::vector<std::vector<int>>> cache;
-        while (curr_ub - curr_lb >= 3) {
-            int mid1 = curr_lb + (curr_ub - curr_lb) / 3;
-            int mid2 = curr_ub - (curr_ub - curr_lb) / 3;
-            auto solution1 = get_or_calculate(cache, mid1, flag, p, mode_str);
-            auto solution2 = get_or_calculate(cache, mid2, flag, p, mode_str);
+    bool use_cache = false;
+    // Check if "best X" is already discovered, then skip the search
+    auto best_X_file = p.parent_path() / "bestX.txt";
+    if (fs::exists(best_X_file)) {
+        std::ifstream file(best_X_file);
+        file >> X;
+        std::cout << std::format("Using cached X value: {}\n", X) << std::endl;
+        use_cache = true;
+    }
 
-            if (solution1.back().back() > solution2.back().back()) {
-                curr_ub = mid2;
-            } else {
-                curr_lb = mid1;
+    if (!use_cache) {
+        // Assume the function is "concave"
+        if (bisection) {
+            // New trinary search method to pick the optimal X
+            int curr_lb = 0, curr_ub = X_ub;
+            // Cache results to avoid recomputation
+            std::unordered_map<int, std::vector<std::vector<int>>> cache;
+            while (curr_ub - curr_lb >= 3) {
+                int mid1 = curr_lb + (curr_ub - curr_lb) / 3;
+                int mid2 = curr_ub - (curr_ub - curr_lb) / 3;
+                auto solution1 = get_or_calculate(cache, mid1, flag, p, mode_str);
+                auto solution2 = get_or_calculate(cache, mid2, flag, p, mode_str);
+
+                if (solution1.back().back() > solution2.back().back()) {
+                    curr_ub = mid2;
+                } else {
+                    curr_lb = mid1;
+                }
+            }
+
+            for (int x = curr_lb; x <= curr_ub; x++) {
+                auto solution = get_or_calculate(cache, x, flag, p, mode_str);
+                if (solution.back().back() > best_reward) {
+                    best_reward = solution.back().back();
+                    best_X = x;
+                    best_results = solution;
+                }
+            }
+        } else {
+            // Iterate through the possible X values to determine which one gives the best outcome
+            for (int x = 0; x <= X_ub; x++) {
+                auto solution = test_x(x, flag, p, mode_str);
+                if (solution.back().back() > best_reward) {
+                    best_reward = solution.back().back();
+                    best_X = x;
+                    best_results = solution;
+                }
             }
         }
 
-        for (int x = curr_lb; x <= curr_ub; x++) {
-            auto solution = get_or_calculate(cache, x, flag, p, mode_str);
-            if (solution.back().back() > best_reward) {
-                best_reward = solution.back().back();
-                best_X = x;
-                best_results = solution;
-            }
-        }
+        std::ofstream file(best_X_file);
+        file << best_X;
+        std::cout << std::format("Best X value: {}\n", best_X) << std::endl;
     } else {
-        // Iterate through the possible X values to determine which one gives the best outcome
-        for (int x = 0; x <= X_ub; x++) {
-            auto solution = test_x(x, flag, p, mode_str);
-            if (solution.back().back() > best_reward) {
-                best_reward = solution.back().back();
-                best_X = x;
-                best_results = solution;
-            }
-        }
+        // Use the cached X value to get the best results
+        auto solution = test_x(X, flag, p, mode_str);
+        best_reward = solution.back().back();
+        best_results = solution;
+        best_X = X;
     }
 
     std::string tc_num = std::regex_replace(
@@ -346,6 +376,8 @@ int main(int argc, char **argv) {
     auto end_overall = std::chrono::steady_clock::now();
     result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
                   std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0, table_size);
+
+    std::cout << "==================================\n";
 
 #ifdef print_solution
     print_results(solution, N);
