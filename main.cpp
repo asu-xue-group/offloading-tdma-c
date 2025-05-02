@@ -290,8 +290,8 @@ int main(int argc, char **argv) {
     // Find the optimal X
     // Lower bound should satisfy the minimum time requirement
     // Upper bound should not exceed the maximum time requirement
-//    int X_lb = std::ceil(min_time / (X * z));
-//    int X_ub = std::ceil(max_time / (X * z));
+    //    int X_lb = std::ceil(min_time / (X * z));
+    //    int X_ub = std::ceil(max_time / (X * z));
     int X_ub = 0;
     for (int n = 1; n <= N; n++) {
         for (int k = 1; k <= K; k++) {
