@@ -9,10 +9,30 @@
 #include <queue>
 #include <algorithm>
 
+using Entity = std::variant<SERVER*, USER*>;
+
+struct Node {
+    std::string name;
+    Entity repr;
+
+    [[nodiscard]] bool is_server() const {
+        return std::holds_alternative<SERVER*>(repr);
+    }
+
+    [[nodiscard]] SERVER* as_server() const {
+        return std::get<SERVER*>(repr);
+    }
+
+    [[nodiscard]] USER* as_user() const {
+        return std::get<USER*>(repr);
+    }
+};
 
 struct Edge {
-    int to;
-    double weight;
+    Node &to;
+    int timeslot;
+    double snr;
+    double distance;
 };
 
 class Graph {
@@ -22,28 +42,28 @@ class Graph {
 
 public:
     // add a node if new, return its ID
-    int addNode(const std::string& s) {
-        if (auto it = index.find(s); it != index.end())
+    int addNode(const Entity ent) {
+        if (auto it = index.find(ent); it != index.end())
             return it->second;
         int id = static_cast<int>(names.size());
-        names.push_back(s);
-        index[s] = id;
-        adj.emplace_back();       // add empty neighbor list
+        names.push_back(str);
+        index[str] = id;
+        adj.emplace_back();       // add an empty neighbor list
         return id;
     }
 
-    void addEdge(const std::string& a, const std::string& b, double w) {
-        int u = addNode(a);
-        int v = addNode(b);
-        adj[u].push_back({v,w});
+    void addEdge(const std::string& a, const std::string& b) {
+        int e1 = addNode(a);
+        int e2 = addNode(b);
+        adj[e1].push_back({e2});
     }
 
-    // Dijkstra works on ints [0..n). Return nullopt if A or B not in graph.
+    // Dijkstra works on ints [0..n). Return nullopt if A or B is not in the graph.
     std::optional<std::pair<std::vector<std::string>,double>>
     shortest_path(const std::string& A,const std::string& B) const {
         auto iA = index.find(A), iB = index.find(B);
         if (iA==index.end() || iB==index.end())
-            return std::nullopt;           // src/dst not even in graph
+            return std::nullopt;           // src/dst not even in the graph
 
         int n = static_cast<int>(adj.size()), s = iA->second, t = iB->second;
         const double INF = std::numeric_limits<double>::infinity();

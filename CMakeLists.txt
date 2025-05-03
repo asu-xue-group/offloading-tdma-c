@@ -12,6 +12,8 @@ add_executable(tdma_knapsack main.cpp
         subs.hpp
         knapsack.hpp
         output.hpp
+        structs.h
+        global.h
         graph.hpp)
 
 target_link_libraries(tdma_knapsack PRIVATE nlohmann_json::nlohmann_json)

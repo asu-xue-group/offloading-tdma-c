@@ -55,7 +55,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
 
     // Iterate over all servers
     for (int m = 0; m <= M + L; m++) {
-        int required_T;
+        int required_T = 0;
         // Special calculation for relay servers
         if (m > M) {
             double snr_relay = snr_ur(m - M, n);
