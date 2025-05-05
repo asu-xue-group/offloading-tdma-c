@@ -16,7 +16,6 @@ extern OPT *opt;
 extern long long table_size;
 
 
-
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
     std::vector<int> sequence = sequences[index];
@@ -58,25 +57,25 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
         int required_T = 0;
         // Special calculation for relay servers
         if (m > M) {
-            double snr_relay = snr_ur(m - M, n);
-            if (snr_relay < beta) {
-                continue;
-            }
-            required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
+//            double snr_relay = snr_ur(m - M, n);
+//            if (snr_relay < beta) {
+//                continue;
+//            }
+//            required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
         } else {
             if (m != 0) {
                 // Obtain pre-calculated SNR and timeslot info
-                TIMING *curr = timing.at(n).at(m);
-                if (curr->relay == -1) {
-                    continue;
-                }
-                required_T = curr->T;
+//                TIMING *curr = timing.at(n).at(m);
+//                if (curr->relay == -1) {
+//                    continue;
+//                }
+//                required_T = curr->T;
             }
         }
         // Catch the case of infinity
-        if (required_T <= 0) {
-            continue;
-        }
+//        if (required_T <= 0) {
+//            continue;
+//        }
 
         // Iterate over offloading tiers
         for (int k = 1; k <= K; k++) {
@@ -108,7 +107,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
 //                if (X * T * z <= u[n].ddl - u[n].tier[k].time) {
                 // Calculate the rewards of the current tier
 
-            auto delay = calc_delay(n, m, k);
+            auto delay = 0.0;
             auto curr_reward = calc_reward(n, k, delay);
             auto reward = curr_reward + prev_opt;
 
@@ -120,9 +119,9 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
 
                 // If the entry is penalized due to delay, add it to the database
                 auto index_str = std::format("{}_{}_{}", n, m, k);
-                if (delay > 0.0f) {
-                    penalized[index_str] = {delay, curr_reward / u[n].tier[k].reward};
-                }
+//                if (delay > 0.0f) {
+//                    penalized[index_str] = {delay, curr_reward / u[n].tier[k].reward};
+//                }
             }
 
         }

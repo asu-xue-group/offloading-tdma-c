@@ -8,97 +8,192 @@
 #include <limits>
 #include <queue>
 #include <algorithm>
+#include <variant>
+#include "structs.h"
+#include "global.h"
+#include "subs.hpp"
 
-using Entity = std::variant<SERVER*, USER*>;
-
-struct Node {
-    std::string name;
-    Entity repr;
-
-    [[nodiscard]] bool is_server() const {
-        return std::holds_alternative<SERVER*>(repr);
-    }
-
-    [[nodiscard]] SERVER* as_server() const {
-        return std::get<SERVER*>(repr);
-    }
-
-    [[nodiscard]] USER* as_user() const {
-        return std::get<USER*>(repr);
-    }
-};
-
-struct Edge {
-    Node &to;
-    int timeslot;
-    double snr;
-    double distance;
-};
+#define Entity std::variant<SERVER*, USER*>
 
 class Graph {
-    std::vector<std::vector<Edge>> adj;         // adj[u] = list of (v, w)
-    std::unordered_map<std::string,int> index;  // map names → 0..N-1
-    std::vector<std::string> names;             // inverse: id → name
+private:
+    struct Node {
+        std::string name;
+        Entity entity;
+
+        [[nodiscard]] bool is_server() const { return std::holds_alternative<SERVER*>(entity); }
+        [[nodiscard]] SERVER* as_server() const { return std::get<SERVER*>(entity); }
+        [[nodiscard]] USER* as_user() const { return std::get<USER*>(entity); }
+    };
+
+    struct Edge {
+        int to_id;         // Target node ID
+        int timeslot;      // Time slot (distance metric)
+        double snr;        // Signal-to-noise ratio
+        double distance;   // Physical distance
+    };
+
+    static bool ent_equals(const Entity &e1, const Entity &e2) {
+        return std::visit([](auto* ptr) { return ptr->name; }, e1) ==
+                std::visit([](auto* ptr) { return ptr->name; }, e2);
+    }
+
+
+    std::vector<Node> nodes;                        // List of all nodes
+    std::vector<std::vector<Edge>> adj_list;        // Adjacency list
+    std::unordered_map<std::string, int> node_map;  // Name to node ID mapping
 
 public:
-    // add a node if new, return its ID
-    int addNode(const Entity ent) {
-        if (auto it = index.find(ent); it != index.end())
+    // Add a node to the graph (if not already present)
+    int add_node(const Entity& entity) {
+        std::string name = std::visit([](auto* ptr) { return ptr->name; }, entity);
+
+        // Check if the node already exists
+        auto it = node_map.find(name);
+        if (it != node_map.end()) {
             return it->second;
-        int id = static_cast<int>(names.size());
-        names.push_back(str);
-        index[str] = id;
-        adj.emplace_back();       // add an empty neighbor list
+        }
+
+        // Add a new node
+        int id = static_cast<int>(nodes.size());
+        nodes.push_back({name, entity});
+        node_map[name] = id;
+        adj_list.emplace_back();  // Add an empty adjacency list
+
         return id;
     }
 
-    void addEdge(const std::string& a, const std::string& b) {
-        int e1 = addNode(a);
-        int e2 = addNode(b);
-        adj[e1].push_back({e2});
+    // Add an edge between two nodes with time slot as distance metric
+    bool add_edge(const Entity& from,
+                  const Entity& to) {
+        // Reject self-loops
+        if (ent_equals(from, to)) return false;
+
+        // Get positions
+        auto get_pos = [](const auto& entity) {
+            return std::visit([](auto* ptr) {
+                return std::pair{ptr->x, ptr->y};
+            }, entity);
+        };
+
+        auto [from_x, from_y] = get_pos(from);
+        auto [to_x, to_y] = get_pos(to);
+
+        // Calculate distance and SNR
+        double distance = calc_distance(from_x, from_y, to_x, to_y);
+        double snr = calc_snr(distance);
+
+        // Skip edges with insufficient SNR
+        if (snr < beta) {
+            return false;
+        }
+
+        // Add nodes and edge
+        int from_id = add_node(from);
+        int to_id = add_node(to);
+
+        // Check if edge already exists
+        for (const auto& edge : adj_list[from_id]) {
+            if (edge.to_id == to_id) {
+                // Edge already exists, don't add a duplicate
+                return false;
+            }
+        }
+
+        adj_list[from_id].push_back({to_id, -1, snr, distance});
+        return true;
     }
 
-    // Dijkstra works on ints [0..n). Return nullopt if A or B is not in the graph.
-    std::optional<std::pair<std::vector<std::string>,double>>
-    shortest_path(const std::string& A,const std::string& B) const {
-        auto iA = index.find(A), iB = index.find(B);
-        if (iA==index.end() || iB==index.end())
-            return std::nullopt;           // src/dst not even in the graph
+    // Find the shortest path between two nodes using timeslot as a distance metric
+    std::optional<std::pair<std::vector<std::string>, int>>
+    shortest_path(const std::string& start, const std::string& end) const {
+        // Check if nodes exist
+        auto start_it = node_map.find(start);
+        auto end_it = node_map.find(end);
+        if (start_it == node_map.end() || end_it == node_map.end()) {
+            return std::nullopt;
+        }
 
-        int n = static_cast<int>(adj.size()), s = iA->second, t = iB->second;
-        const double INF = std::numeric_limits<double>::infinity();
-        std::vector<double>  dist(n, INF);
-        std::vector<int>     prev(n, -1);
+        int start_id = start_it->second;
+        int end_id = end_it->second;
+        int n = static_cast<int>(nodes.size());
 
-        using PDI = std::pair<double,int>;
-        std::priority_queue<PDI, std::vector<PDI>, std::greater<>> pq;
+        // Initialize Dijkstra data structures
+        const int INF = std::numeric_limits<int>::max();
+        std::vector<int> dist(n, INF);
+        std::vector<int> prev(n, -1);
 
-        dist[s]=0;
-        pq.emplace(0,s);
+        // Priority queue: <distance, node_id>
+        using PQueue = std::priority_queue<
+                std::pair<int, int>,
+                std::vector<std::pair<int, int>>,
+                std::greater<>
+        >;
+        PQueue pq;
 
-        while(!pq.empty()) {
-            auto [d,u] = pq.top(); pq.pop();
-            if (d>dist[u]) continue;
-            if (u==t) break;
-            for (auto& e: adj[u]) {
-                double alt = d + e.weight;
-                if (alt < dist[e.to]) {
-                    dist[e.to] = alt;
-                    prev[e.to] = u;
-                    pq.emplace(alt, e.to);
+        // Start Dijkstra
+        dist[start_id] = 0;
+        pq.emplace(0, start_id);
+
+        while (!pq.empty()) {
+            auto [d, uu] = pq.top();
+            pq.pop();
+
+            // Skip outdated entries
+            if (d > dist[uu]) continue;
+
+            // Early termination if we reached destination
+            if (uu == end_id) break;
+
+            // Explore neighbors
+            for (const auto& edge : adj_list[uu]) {
+                int v = edge.to_id;
+                int new_dist = d + edge.timeslot;
+
+                if (new_dist < dist[v]) {
+                    dist[v] = new_dist;
+                    prev[v] = uu;
+                    pq.emplace(new_dist, v);
                 }
             }
         }
 
-        if (dist[t]==INF)
+        // Check if a path exists
+        if (dist[end_id] == INF) {
             return std::make_pair(std::vector<std::string>{}, INF);
+        }
 
-        // rebuild path of names
+        // Reconstruct the path
         std::vector<std::string> path;
-        for (int cur=t; cur!=-1; cur=prev[cur])
-            path.push_back(names[cur]);
-        std::ranges::reverse(path);
-        return std::make_pair(std::move(path), dist[t]);
+        for (int cur = end_id; cur != -1; cur = prev[cur]) {
+            path.push_back(nodes[cur].name);
+        }
+        std::reverse(path.begin(), path.end());
+
+        return std::make_pair(path, dist[end_id]);
+    }
+
+    // Get node details by name
+    std::optional<Node> get_node(const std::string& name) const {
+        auto it = node_map.find(name);
+        if (it == node_map.end()) {
+            return std::nullopt;
+        }
+        return nodes[it->second];
+    }
+
+    // Get all connections for a node
+    std::vector<std::pair<std::string, int>> get_connections(const std::string& name) const {
+        auto it = node_map.find(name);
+        if (it == node_map.end()) {
+            return {};
+        }
+
+        std::vector<std::pair<std::string, int>> connections;
+        for (const auto& edge : adj_list[it->second]) {
+            connections.emplace_back(nodes[edge.to_id].name, edge.timeslot);
+        }
+        return connections;
     }
 };
 

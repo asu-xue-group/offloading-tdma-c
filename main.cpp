@@ -179,6 +179,7 @@ int main(int argc, char **argv) {
         }
 
         // Create a graph node for the server/relay
+        graph.add_node(&s[m]);
     }
 
     for (int n = 1; n <= N; n++) {
@@ -201,73 +202,89 @@ int main(int argc, char **argv) {
         u[n].tier[2].ram = j["users"][n - 1]["tiers"][1]["ram"];
         u[n].tier[2].reward = j["users"][n - 1]["tiers"][1]["reward"];
         u[n].tier[2].time = j["users"][n - 1]["tiers"][1]["time"];
+
+        u[n].name = std::format("u_{}", n);
+        graph.add_node(&u[n]);
     }
 
-    // Pre-calculate the distance between servers and users
-    for (int m = 1; m <= M; m++) {
-        for (int n = 1; n <= N; n++) {
-            s_distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
-        }
-    }
-    // Pre-calculate the distance between users and relays & relays and servers
-    for (int l = 1; l <= L; l++) {
-        for (int n = 1; n <= N; n++) {
-            ur_distance.at(l).at(n) = calc_distance(s[l + M].x, s[l + M].y, u[n].x, u[n].y);
-        }
-        for (int m = 1; m <= M; m++) {
-            rs_distance.at(l).at(m) = calc_distance(s[l + M].x, s[l + M].y, s[m].x, s[m].y);
-        }
-    }
-
-    // Pre-calculate the minimum timeslot required for each user-server pair
+    // Attempt to add edges to every single connection from user to server/relay and relay to relay.
     for (int n = 1; n <= N; n++) {
-        for (int m = 1; m <= M; m++) {
-            timing.at(n).at(m) = new TIMING();
-
-            int best_relay = -1;
-            int best_T = INT_MAX;
-            int best_ur_time = -1;
-            int best_rs_time = -1;
-
-            // Test direct connection
-            double snr_result = snr(m, n);
-            if (snr_result < beta) {
-                continue;
-            } else {
-                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
-                if (used_T < best_T) {
-                    best_relay = 0;
-                    best_T = used_T;
-                    best_ur_time = -1;
-                    best_rs_time = -1;
-                }
-            }
-
-            // Test relay connection
-            for (int l = 1; l <= L; l++) {
-                double snr_ur_result = snr_ur(l, n);
-                double snr_rs_result = snr_rs(l, m);
-                if (snr_ur_result < beta || snr_rs_result < beta) {
-                    continue;
-                } else {
-                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
-                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
-                    int used_T = ur_time + rs_time;
-                    if (used_T < best_T) {
-                        best_relay = l;
-                        best_T = used_T;
-                        best_ur_time = ur_time;
-                        best_rs_time = rs_time;
-                    }
-                }
-            }
-
-            timing.at(n).at(m)->relay = best_relay;
-            timing.at(n).at(m)->T = best_T;
-            timing.at(n).at(m)->ur_time = best_ur_time;
-            timing.at(n).at(m)->rs_time = best_rs_time;
+        for (int m = 1; m <= M + L; m++) {
+            graph.add_edge(&u[n], &s[m]);
         }
     }
+    for (int l = M + 1; l <= M + L; l++) {
+        for (int l2 = M + 1; l2 <= M + L; l2++) {
+            if (l == l2) continue;
+            graph.add_edge(&s[l], &s[l2]);
+        }
+    }
+
+//    // Pre-calculate the distance between servers and users
+//    for (int m = 1; m <= M; m++) {
+//        for (int n = 1; n <= N; n++) {
+//            s_distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
+//        }
+//    }
+//    // Pre-calculate the distance between users and relays & relays and servers
+//    for (int l = 1; l <= L; l++) {
+//        for (int n = 1; n <= N; n++) {
+//            ur_distance.at(l).at(n) = calc_distance(s[l + M].x, s[l + M].y, u[n].x, u[n].y);
+//        }
+//        for (int m = 1; m <= M; m++) {
+//            rs_distance.at(l).at(m) = calc_distance(s[l + M].x, s[l + M].y, s[m].x, s[m].y);
+//        }
+//    }
+//
+//    // Pre-calculate the minimum timeslot required for each user-server pair
+//    for (int n = 1; n <= N; n++) {
+//        for (int m = 1; m <= M; m++) {
+//            timing.at(n).at(m) = new TIMING();
+//
+//            int best_relay = -1;
+//            int best_T = INT_MAX;
+//            int best_ur_time = -1;
+//            int best_rs_time = -1;
+//
+//            // Test direct connection
+//            double snr_result = snr(m, n);
+//            if (snr_result < beta) {
+//                continue;
+//            } else {
+//                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
+//                if (used_T < best_T) {
+//                    best_relay = 0;
+//                    best_T = used_T;
+//                    best_ur_time = -1;
+//                    best_rs_time = -1;
+//                }
+//            }
+//
+//            // Test relay connection
+//            for (int l = 1; l <= L; l++) {
+//                double snr_ur_result = snr_ur(l, n);
+//                double snr_rs_result = snr_rs(l, m);
+//                if (snr_ur_result < beta || snr_rs_result < beta) {
+//                    continue;
+//                } else {
+//                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
+//                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
+//                    int used_T = ur_time + rs_time;
+//                    if (used_T < best_T) {
+//                        best_relay = l;
+//                        best_T = used_T;
+//                        best_ur_time = ur_time;
+//                        best_rs_time = rs_time;
+//                    }
+//                }
+//            }
+//
+//            timing.at(n).at(m)->relay = best_relay;
+//            timing.at(n).at(m)->T = best_T;
+//            timing.at(n).at(m)->ur_time = best_ur_time;
+//            timing.at(n).at(m)->rs_time = best_rs_time;
+//        }
+//    }
 
     table_size = 1;
     for (int m = 1; m <= M + L; m++) {
@@ -284,12 +301,12 @@ int main(int argc, char **argv) {
     float best_reward = 0;
     std::vector<std::vector<std::variant<int, float>>> best_results;
 
-    auto solution = test_x(x, flag, p, mode_str);
-    auto reward = std::get<float>(solution.back().back());
-    if (reward > best_reward) {
-        best_reward = reward;
-        best_results = solution;
-    }
+//    auto solution = test_x(x, flag, p, mode_str);
+//    auto reward = std::get<float>(solution.back().back());
+//    if (reward > best_reward) {
+//        best_reward = reward;
+//        best_results = solution;
+//    }
 
 
 
@@ -299,8 +316,8 @@ int main(int argc, char **argv) {
             std::string("$1")
     );
     auto end_overall = std::chrono::steady_clock::now();
-    result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
-                  std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0, table_size);
+//    result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
+//                  std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0, table_size);
 
     std::cout << "==================================\n";
 

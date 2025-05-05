@@ -41,16 +41,8 @@ double calc_distance(float x1, float y1, float x2, float y2) {
     return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
 }
 
-double snr(int m, int n) {
-    return Pmax / (noise * std::pow(s_distance.at(m).at(n), alpha));
-}
-
-double snr_ur(int l, int n) {
-    return Pmax / (noise * std::pow(ur_distance.at(l).at(n), alpha));
-}
-
-double snr_rs(int l, int m) {
-    return Pmax / (noise * std::pow(rs_distance.at(l).at(m), alpha));
+double calc_snr(double distance) {
+    return Pmax / (noise * std::pow(distance, alpha));
 }
 
 double trans_time(double data, double snr) {
@@ -125,14 +117,14 @@ long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
 // Calculate the delay for a user-server pair
 // When m == 0, it means the user is not assigned to any server (local processing)
 // When m == 0 and k == 0, it means the user is not scheduled at all
-double calc_delay(int n, int m, int k) {
-    auto exec_time = u[n].tier[k].time;
-    auto ddl = u[n].ddl;
-    if (m == 0) {
-        return std::max(0.0, static_cast<double>(exec_time - ddl));
-    }
-    return std::max(0.0, exec_time + X * z * T - ddl);
-}
+//double calc_delay(int n, int m, int k) {
+//    auto exec_time = u[n].tier[k].time;
+//    auto ddl = u[n].ddl;
+//    if (m == 0) {
+//        return std::max(0.0, static_cast<double>(exec_time - ddl));
+//    }
+//    return std::max(0.0, exec_time + X * z * T - ddl);
+//}
 
 // Exponential decay function
 double calc_reward(int n, int k, double delay) {
