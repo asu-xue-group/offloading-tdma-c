@@ -218,6 +218,27 @@ public:
         }
         return connections;
     }
+    
+    // See if two nodes are directly connected
+    std::optional<Edge> is_connected(const std::string &from, const std::string &to) const {
+        auto from_it = node_map.find(from);
+        auto to_it = node_map.find(to);
+
+        // If either node doesn't exist, they're not connected
+        if (from_it == node_map.end() || to_it == node_map.end()) {
+            return std::nullopt;
+        }
+
+        // Check if there's a direct edge from 'from' to 'to'
+        for (const auto &edge: adj_list[from_it->second]) {
+            if (edge.to_id == to_it->second) {
+                return edge;
+            }
+        }
+
+        return std::nullopt;
+    }
+
 };
 
 #endif //TDMA_KNAPSACK_GRAPH_HPP

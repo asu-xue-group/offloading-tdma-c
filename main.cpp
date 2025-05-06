@@ -24,7 +24,7 @@ namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
 OPT *opt;
-std::vector<std::vector<OPT_PATH *>> opt_path;
+std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path; // N x (M+L) x K
 int K, M, L, N;
 long long table_size;
 Graph graph;
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();
     int flag;
     graph = Graph();
-    opt_path.push_back(std::vector<OPT_PATH *>());
+    opt_path.push_back(std::vector<std::vector<OPT_PATH *>>());
 
     // Check commandline arguments
     if (argc < 2) {
@@ -152,12 +152,6 @@ int main(int argc, char **argv) {
 
         u[n].name = std::format("u_{}", n);
         graph.add_node(&u[n]);
-
-        opt_path.push_back(std::vector<OPT_PATH *>());
-        opt_path[n].push_back(nullptr);
-        for (int k = 1; k <= K; k++) {
-            opt_path[n].push_back(new OPT_PATH());
-        }
     }
 
     // Attempt to add edges to every single connection from user to server/relay and relay to relay.
@@ -170,6 +164,42 @@ int main(int argc, char **argv) {
         for (int m = 1; m <= M + L; m++) {
             if (l == m) continue;
             graph.add_edge(&s[l], &s[m]);
+        }
+    }
+
+    // Pre-compute the best offloading path from user to any server, given any tier
+    for (int n = 0; n <= N; n++) {
+        opt_path.push_back(std::vector<std::vector<OPT_PATH *>>());
+        if (n == 0) continue;
+        for (int m = 0; m <= M + L; m++) {
+            opt_path.at(n).push_back(std::vector<OPT_PATH *>());
+            if (m == 0) continue;
+            for (int k = 0; k <= K; k++) {
+                auto *path = new OPT_PATH;
+                if (k == 0) {
+                    opt_path.at(n).at(m).push_back(path);
+                    continue;
+                } else {
+                    if (!s[m].relay) {
+                        graph.update_timeslot(u[n].data, u[n].ddl - u[n].tier[k].time);
+                        auto result = graph.shortest_path(u[n].name, s[m].name);
+                        if (result == std::nullopt) {
+                            opt_path.at(n).at(m).push_back(path);
+                            continue;
+                        }
+                        std::tie(path->path, path->timeslots, path->required_T) = result.value();
+                        opt_path.at(n).at(m).push_back(path);
+                    } else {
+                        auto e = graph.is_connected(u[n].name, s[m].name);
+                        if (!e) {
+                            opt_path.at(n).at(m).push_back(path);
+                        }
+                        auto X_ub = std::floor((u[n].ddl - u[n].tier[k].time) / (T * z));
+                        path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
+                        opt_path.at(n).at(m).push_back(path);
+                    }
+                }
+            }
         }
     }
 
@@ -207,9 +237,9 @@ int main(int argc, char **argv) {
 //    std::cout << "Time taken: " << time_delta << " seconds\n";
 //    std::cout << "Table size: " << table_size << std::endl;
 
-    free(s);
-    free(u);
-    free(opt);
+//    free(s);
+//    free(u);
+//    free(opt);
 
     return 0;
 }

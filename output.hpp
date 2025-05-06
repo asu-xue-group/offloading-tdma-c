@@ -7,7 +7,7 @@
 #include <variant>
 #include "subs.hpp"
 
-extern std::vector<std::vector<OPT_PATH *>> opt_path;
+extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
 
 std::string path_to_str(std::vector<std::string> path, std::vector<int> timeslots) {
     std::ostringstream oss;
@@ -34,8 +34,9 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
 
     // o[0] = user index, o[1] = server index, o[2] = algo index, o[3] = timeslots allocated, o[4] = reward
     fprintf(fp, "T=%d, lambda=%d\n", T, lambda);
-    fprintf(fp, "Optimal value: %f\n", std::get<float>(solution.back().back()));
+    fprintf(fp, "Optimal value: %f\n\n", std::get<float>(solution.back().back()));
     fprintf(fp, "Optimal solution:\n");
+    int total_ts_used = 0;
     for (const auto &o: solution) {
         auto o0 = std::get<int>(o[0]);
         auto o1 = std::get<int>(o[1]);
@@ -49,18 +50,23 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
                 fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
             }
         } else if (o1 <= M) {
-            auto opt_path_obj = opt_path.at(o0).at(o2);
+            auto opt_path_obj = opt_path.at(o0).at(o1).at(o2);
             auto path = opt_path_obj->path;
             auto timeslots = opt_path_obj->timeslots;
-            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots\n"
-                        "its offloading path is %s\n",
-                    o0, o1, o2, o3, path_to_str(path, timeslots).c_str());
+            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots\n",
+                    o0, o1, o2, o3);
+            total_ts_used += o3;
+            if (path.size() > 2) {
+                fprintf(fp, "\t> The offloading path is %s\n", path_to_str(path, timeslots).c_str());
+            }
         } else {
             fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots\n",
                     o0, o1 - M, o2, o3);
+            total_ts_used += o3;
         }
     }
-    fprintf(fp, "Time taken: %.4f seconds\n", time);
+    fprintf(fp, "\nTime taken: %.2f seconds\n", time);
+    fprintf(fp, "Total timeslots used: %d/%d", total_ts_used, T);
 
     fclose(fp);
 }

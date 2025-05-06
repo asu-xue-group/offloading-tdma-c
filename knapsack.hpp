@@ -16,7 +16,7 @@
 extern OPT *opt;
 extern long long table_size;
 extern Graph graph;
-extern std::vector<std::vector<OPT_PATH*>> opt_path;
+extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
@@ -60,8 +60,6 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
         for (int k = 1; k <= K; k++) {
             auto prev_opt = 0.0f;
             auto required_T = 0;
-            std::vector<std::string> path;
-            std::vector<int> timeslots;
             // Local processing
             if (m == 0) {
                 if (u[n].cpu < static_cast<float>(u[n].tier[k].cpu) || u[n].ram < static_cast<float>(u[n].tier[k].ram)) {
@@ -71,11 +69,10 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                     prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
                 }
             } else {
-                // Update the timeslot information on the graph
-                graph.update_timeslot(u[n].data, u[n].ddl - u[n].tier[k].time);
-                auto result = graph.shortest_path(u[n].name, s[m].name);
-                if (result == std::nullopt) continue;
-                std::tie(path, timeslots, required_T) = result.value();
+                auto res = opt_path.at(n).at(m).at(k);
+                if (res->required_T == -1) continue;
+                required_T = res->required_T;
+
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
                 update_combo(new_combo, n, m, k, mode);
@@ -98,10 +95,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 m_opt = m;
                 k_opt = k;
                 slot_opt = required_T;
-                opt_path.at(n).at(k)->path = path;
-                opt_path.at(n).at(k)->timeslots = timeslots;
             }
-
         }
     }
     
