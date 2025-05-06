@@ -7,7 +7,23 @@
 #include <variant>
 #include "subs.hpp"
 
-extern std::vector<std::vector<TIMING *>> timing;
+extern std::vector<std::vector<OPT_PATH *>> opt_path;
+
+std::string path_to_str(std::vector<std::string> path, std::vector<int> timeslots) {
+    std::ostringstream oss;
+
+    int n = path.size();
+    if (n < 2 || timeslots.size() != n - 1) {
+        return "[Invalid path or timeslot input]";
+    }
+
+    for (int i = 0; i < n - 1; ++i) {
+        oss << path[i] << " --(" << timeslots[i] << ")--> ";
+    }
+
+    oss << path.back(); // add the last node
+    return oss.str();
+}
 
 void print_to_file(const std::string &filename, const std::vector<std::vector<std::variant<int, float>>> &solution, double time) {
     FILE *fp = fopen(filename.c_str(), "w");
@@ -26,13 +42,6 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
         auto o2 = std::get<int>(o[2]);
         auto o3 = std::get<int>(o[3]);
 
-        auto index_str = std::format("{}_{}_{}", o0, o1, o2);
-        std::string penalty_string;
-//        if (penalized.contains(index_str)) {
-//            auto delay = penalized.at(index_str).at(0);
-//            auto reward_pct = penalized.at(index_str).at(1);
-//            penalty_string = std::format("(delay: {:.2f}, reward: {:.0f}%)", delay, reward_pct * 100);
-//        }
         if (o1 == 0) {
             if (o2 == 0) {
                 fprintf(fp, "User %d is not scheduled\n", o0);
@@ -40,19 +49,15 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
                 fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
             }
         } else if (o1 <= M) {
-//            if (timing.at(o0).at(o1)->relay == 0) {
-//                fprintf(fp,
-//                        "User %d is assigned to server %d with algo %d (direct connection), and is assigned %d time slots %s\n",
-//                        o0, o1, o2, o3, penalty_string.c_str());
-//
-//            } else {
-//                fprintf(fp,
-//                        "User %d is assigned to server %d with algo %d, via relay %d, and is assigned %d time slots %s\n",
-//                        o0, o1, o2, timing.at(o0).at(o1)->relay, o3, penalty_string.c_str());
-//            }
+            auto opt_path_obj = opt_path.at(o0).at(o2);
+            auto path = opt_path_obj->path;
+            auto timeslots = opt_path_obj->timeslots;
+            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots\n"
+                        "its offloading path is %s\n",
+                    o0, o1, o2, o3, path_to_str(path, timeslots).c_str());
         } else {
-            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots %s\n",
-                    o0, o1 - M, o2, o3, penalty_string.c_str());
+            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots\n",
+                    o0, o1 - M, o2, o3);
         }
     }
     fprintf(fp, "Time taken: %.4f seconds\n", time);
@@ -60,14 +65,14 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
     fclose(fp);
 }
 
-void result_to_csv(const std::filesystem::path& filename, const std::string& flag, int tc_num, int x, int _lambda, float reward, double time, long long table_size) {
+void result_to_csv(const std::filesystem::path& filename, const std::string& flag, std::string tc_num, int _lambda, float reward, double time, long long table_size) {
     FILE *fp = fopen(filename.string().c_str(), "a");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());
         exit(0);
     }
 
-    fprintf(fp, "%s,%d,%d,%d,%.4f,%.4f,%lld\n", flag.c_str(), tc_num, x, _lambda, reward, time, table_size);
+    fprintf(fp, "%s,%s,%d,%.4f,%.4f,%lld\n", flag.c_str(), tc_num.c_str(), _lambda, reward, time, table_size);
     fclose(fp);
 }
 

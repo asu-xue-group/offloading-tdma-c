@@ -10,11 +10,13 @@
 #include "structs.h"
 #include "subs.hpp"
 #include "output.hpp"
+#include "graph.hpp"
 
 
 extern OPT *opt;
 extern long long table_size;
-
+extern Graph graph;
+extern std::vector<std::vector<OPT_PATH*>> opt_path;
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
@@ -54,32 +56,12 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
 
     // Iterate over all servers
     for (int m = 0; m <= M + L; m++) {
-        int required_T = 0;
-        // Special calculation for relay servers
-        if (m > M) {
-//            double snr_relay = snr_ur(m - M, n);
-//            if (snr_relay < beta) {
-//                continue;
-//            }
-//            required_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_relay) / (X * z)));
-        } else {
-            if (m != 0) {
-                // Obtain pre-calculated SNR and timeslot info
-//                TIMING *curr = timing.at(n).at(m);
-//                if (curr->relay == -1) {
-//                    continue;
-//                }
-//                required_T = curr->T;
-            }
-        }
-        // Catch the case of infinity
-//        if (required_T <= 0) {
-//            continue;
-//        }
-
         // Iterate over offloading tiers
         for (int k = 1; k <= K; k++) {
             auto prev_opt = 0.0f;
+            auto required_T = 0;
+            std::vector<std::string> path;
+            std::vector<int> timeslots;
             // Local processing
             if (m == 0) {
                 if (u[n].cpu < static_cast<float>(u[n].tier[k].cpu) || u[n].ram < static_cast<float>(u[n].tier[k].ram)) {
@@ -89,6 +71,11 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                     prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
                 }
             } else {
+                // Update the timeslot information on the graph
+                graph.update_timeslot(u[n].data, u[n].ddl - u[n].tier[k].time);
+                auto result = graph.shortest_path(u[n].name, s[m].name);
+                if (result == std::nullopt) continue;
+                std::tie(path, timeslots, required_T) = result.value();
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
                 update_combo(new_combo, n, m, k, mode);
@@ -103,31 +90,21 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                     prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
                 }
             }
-//                // Check the deadline
-//                if (X * T * z <= u[n].ddl - u[n].tier[k].time) {
-                // Calculate the rewards of the current tier
 
-            auto delay = 0.0;
-            auto curr_reward = calc_reward(n, k, delay);
-            auto reward = curr_reward + prev_opt;
+            auto reward = static_cast<float>(u[n].tier[k].reward) + prev_opt;
 
             if (reward > val) {
-                val = static_cast<float>(reward);
+                val = reward;
                 m_opt = m;
                 k_opt = k;
                 slot_opt = required_T;
-
-                // If the entry is penalized due to delay, add it to the database
-                auto index_str = std::format("{}_{}_{}", n, m, k);
-//                if (delay > 0.0f) {
-//                    penalized[index_str] = {delay, curr_reward / u[n].tier[k].reward};
-//                }
+                opt_path.at(n).at(k)->path = path;
+                opt_path.at(n).at(k)->timeslots = timeslots;
             }
 
         }
     }
-
-    // Notice here we are not returning the relay index as it is recoverable from `timing` variable
+    
     return {val, m_opt, k_opt, slot_opt};
 }
 
@@ -177,7 +154,7 @@ void dp(int mode) {
             }
         }
 
-        std::cout << "Tracing solution for user " << n << std::endl;
+//        std::cout << "Tracing solution for user " << n << std::endl;
         auto curr_solution = trace_solution(opt, mode, n);
 
 #ifdef print_solution

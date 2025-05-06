@@ -100,13 +100,13 @@ public:
             }
         }
 
-        adj_list[from_id].push_back({to_id, -1, snr, distance});
+        adj_list[from_id].push_back({to_id, INT_MAX, snr, distance});
         return true;
     }
 
     // Find the shortest path between two nodes using timeslot as a distance metric
-    std::optional<std::pair<std::vector<std::string>, int>>
-    shortest_path(const std::string& start, const std::string& end) const {
+    std::optional<std::tuple<std::vector<std::string>, std::vector<int>, int>>
+    shortest_path(const std::string& start, const std::string& end) {
         // Check if nodes exist
         auto start_it = node_map.find(start);
         auto end_it = node_map.find(end);
@@ -160,17 +160,40 @@ public:
 
         // Check if a path exists
         if (dist[end_id] == INF) {
-            return std::make_pair(std::vector<std::string>{}, INF);
+            return std::make_tuple(std::vector<std::string>{}, std::vector<int>{}, INF);
         }
 
-        // Reconstruct the path
+        // Reconstruct the path and collect timeslots
         std::vector<std::string> path;
+        std::vector<int> timeslots;
         for (int cur = end_id; cur != -1; cur = prev[cur]) {
             path.push_back(nodes[cur].name);
+            if (prev[cur] != -1) {
+                for (const auto &edge: adj_list[prev[cur]]) {
+                    if (edge.to_id == cur) {
+                        timeslots.push_back(edge.timeslot);
+                        break;
+                    }
+                }
+            }
         }
         std::reverse(path.begin(), path.end());
+        std::reverse(timeslots.begin(), timeslots.end());
 
-        return std::make_pair(path, dist[end_id]);
+        return std::make_tuple(path, timeslots, dist[end_id]);
+    }
+
+    // Here we assume that the transmission over multihop occurs simultaneously
+    void update_timeslot(const float data, const float time) {
+        // X_ub is the maximum # of timeslots this transmission can use given the available time
+        auto X_ub = std::floor(time / (T * z));
+
+        // Each edge has a weight (timeslot) corresponding to the X_ub
+        for (auto &source: adj_list) {
+            for (auto &dest : source) {
+                dest.timeslot = std::ceil(data / (X_ub * z * bandwidth * log2(1 + dest.snr)));
+            }
+        }
     }
 
     // Get node details by name

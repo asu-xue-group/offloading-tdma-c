@@ -24,59 +24,17 @@ namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
 OPT *opt;
-//std::vector<std::vector<TIMING *>> timing;
-//std::unordered_map<std::string, std::vector<double>> penalized;
+std::vector<std::vector<OPT_PATH *>> opt_path;
 int K, M, L, N;
 long long table_size;
-
-
-//std::vector<std::vector<std::variant<int, float>>> test_x(int x, int flag, const fs::path& p, const std::string& mode_str) {
-//    // Update timing info after x changes
-//    for (int n = 1; n <= N; n++) {
-//        for (int m = 1; m <= M; m++) {
-//            // Using relay
-//            int l = timing.at(n).at(m)->relay;
-//            if (l > 0) {
-//                double snr_ur_result = snr_ur(l, n);
-//                double snr_rs_result = snr_rs(l, m);
-//                int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
-//                int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
-//                int used_T = ur_time + rs_time;
-//                timing.at(n).at(m)->T = used_T;
-//                timing.at(n).at(m)->ur_time = ur_time;
-//                timing.at(n).at(m)->rs_time = rs_time;
-//            } else if(l == 0) { // Direct connection
-//                double snr_result = snr(m, n);
-//                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
-//                timing.at(n).at(m)->T = used_T;
-//            }
-//        }
-//    }
-//
-//    auto begin = std::chrono::steady_clock::now();
-//    std::cout << "Calculating for X = " << X << std::endl;
-//    dp(flag);
-//    auto end = std::chrono::steady_clock::now();
-//    auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
-//
-//    auto out_path = p.parent_path() / std::format("output_{}_X{}_T{}_L{}.txt",
-//                                                  mode_str, x, T, lambda);
-//
-//    auto solution = trace_solution(opt, flag, N);
-//
-//    print_to_file(out_path.string(), solution, time_delta);
-////    std::cout << std::format("Time taken: {} seconds", time_delta) << std::endl;
-////    std::cout << std::format("Optimal value: {}\n", solution.back().back()) << std::endl;
-////    std::cout << std::endl;
-//
-//    return solution;
-//}
+Graph graph;
 
 
 int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();
     int flag;
-    auto graph = Graph();
+    graph = Graph();
+    opt_path.push_back(std::vector<OPT_PATH *>());
 
     // Check commandline arguments
     if (argc < 2) {
@@ -96,14 +54,14 @@ int main(int argc, char **argv) {
 
     // Initialize the csv file
     fs::path p = argv[1];
-    auto csv_file = p.parent_path().parent_path() / "results.csv";
+    auto csv_file = p.parent_path().parent_path().parent_path() / "results.csv";
     if (!fs::exists(csv_file)) {
         FILE *fp = fopen(csv_file.string().c_str(), "a");
         if (!fp) {
             fprintf(stderr, "Error: cannot open file %s\n", csv_file.string().c_str());
             exit(0);
         }
-        fprintf(fp, "%s,%s,%s,%s,%s,%s\n", "mode", "tc_num", "lambda", "reward", "time", "t_size");
+        fprintf(fp, "%s,%s,%s,%s,%s,%s\n", "mode", "tc", "lambda", "reward", "time", "t_size");
         fclose(fp);
     }
 
@@ -121,13 +79,6 @@ int main(int argc, char **argv) {
     // Here relays are considered as servers
     s = new SERVER[M + L + 1];
     u = new USER[N + 1];
-//    s_distance = std::vector<std::vector<double>>(M + 1);
-//    ur_distance = std::vector<std::vector<double>>(L + 1);
-//    rs_distance = std::vector<std::vector<double>>(L + 1);
-//    timing = std::vector<std::vector<TIMING *>>(N + 1);
-//    for (int i = 0; i <= N; i++) {
-//        timing.at(i) = std::vector<TIMING *>(M + 1);
-//    }
 
     for (int m = 1; m <= M + L; m++) {
         int cpu, ram;
@@ -138,16 +89,12 @@ int main(int argc, char **argv) {
             s[m].y = j["servers"][m - 1]["y"];
             cpu = j["servers"][m - 1]["cpu"];
             ram = j["servers"][m - 1]["ram"];
-
-//            s_distance.at(m) = std::vector<double>(N + 1);
         } else {
             s[m].index = m;
             s[m].x = j["relays"][m - M - 1]["x"];
             s[m].y = j["relays"][m - M - 1]["y"];
             cpu = j["relays"][m - M - 1]["cpu"];
             ram = j["relays"][m - M - 1]["ram"];
-//            ur_distance.at(m - M) = std::vector<double>(N + 1);
-//            rs_distance.at(m - M) = std::vector<double>(M + 1);
         }
 
         s[m].cpu_orig = cpu;
@@ -205,6 +152,12 @@ int main(int argc, char **argv) {
 
         u[n].name = std::format("u_{}", n);
         graph.add_node(&u[n]);
+
+        opt_path.push_back(std::vector<OPT_PATH *>());
+        opt_path[n].push_back(nullptr);
+        for (int k = 1; k <= K; k++) {
+            opt_path[n].push_back(new OPT_PATH());
+        }
     }
 
     // Attempt to add edges to every single connection from user to server/relay and relay to relay.
@@ -214,77 +167,11 @@ int main(int argc, char **argv) {
         }
     }
     for (int l = M + 1; l <= M + L; l++) {
-        for (int l2 = M + 1; l2 <= M + L; l2++) {
-            if (l == l2) continue;
-            graph.add_edge(&s[l], &s[l2]);
+        for (int m = 1; m <= M + L; m++) {
+            if (l == m) continue;
+            graph.add_edge(&s[l], &s[m]);
         }
     }
-
-//    // Pre-calculate the distance between servers and users
-//    for (int m = 1; m <= M; m++) {
-//        for (int n = 1; n <= N; n++) {
-//            s_distance.at(m).at(n) = calc_distance(s[m].x, s[m].y, u[n].x, u[n].y);
-//        }
-//    }
-//    // Pre-calculate the distance between users and relays & relays and servers
-//    for (int l = 1; l <= L; l++) {
-//        for (int n = 1; n <= N; n++) {
-//            ur_distance.at(l).at(n) = calc_distance(s[l + M].x, s[l + M].y, u[n].x, u[n].y);
-//        }
-//        for (int m = 1; m <= M; m++) {
-//            rs_distance.at(l).at(m) = calc_distance(s[l + M].x, s[l + M].y, s[m].x, s[m].y);
-//        }
-//    }
-//
-//    // Pre-calculate the minimum timeslot required for each user-server pair
-//    for (int n = 1; n <= N; n++) {
-//        for (int m = 1; m <= M; m++) {
-//            timing.at(n).at(m) = new TIMING();
-//
-//            int best_relay = -1;
-//            int best_T = INT_MAX;
-//            int best_ur_time = -1;
-//            int best_rs_time = -1;
-//
-//            // Test direct connection
-//            double snr_result = snr(m, n);
-//            if (snr_result < beta) {
-//                continue;
-//            } else {
-//                int used_T = static_cast<int>(std::ceil(trans_time(u[n].data, snr_result) / (X * z)));
-//                if (used_T < best_T) {
-//                    best_relay = 0;
-//                    best_T = used_T;
-//                    best_ur_time = -1;
-//                    best_rs_time = -1;
-//                }
-//            }
-//
-//            // Test relay connection
-//            for (int l = 1; l <= L; l++) {
-//                double snr_ur_result = snr_ur(l, n);
-//                double snr_rs_result = snr_rs(l, m);
-//                if (snr_ur_result < beta || snr_rs_result < beta) {
-//                    continue;
-//                } else {
-//                    int ur_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_ur_result) / (X * z)));
-//                    int rs_time = static_cast<int>(std::ceil(trans_time(u[n].data, snr_rs_result) / (X * z)));
-//                    int used_T = ur_time + rs_time;
-//                    if (used_T < best_T) {
-//                        best_relay = l;
-//                        best_T = used_T;
-//                        best_ur_time = ur_time;
-//                        best_rs_time = rs_time;
-//                    }
-//                }
-//            }
-//
-//            timing.at(n).at(m)->relay = best_relay;
-//            timing.at(n).at(m)->T = best_T;
-//            timing.at(n).at(m)->ur_time = best_ur_time;
-//            timing.at(n).at(m)->rs_time = best_rs_time;
-//        }
-//    }
 
     table_size = 1;
     for (int m = 1; m <= M + L; m++) {
@@ -294,30 +181,22 @@ int main(int argc, char **argv) {
     std::cout << std::format("Table size: {}\n", table_size) << std::endl;
     opt = new OPT[table_size];
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point end_prep = std::chrono::steady_clock::now();
     std::cout << std::format("Preprocessing took {} seconds\n",
-                             std::chrono::duration_cast<std::chrono::microseconds>(end - begin_initial).count() / 1000000.0) << std::endl;
+                             std::chrono::duration_cast<std::chrono::microseconds>(end_prep - begin_initial).count() / 1000000.0) << std::endl;
 
-    float best_reward = 0;
-    std::vector<std::vector<std::variant<int, float>>> best_results;
+    // The raw results are stored in the `opt` variable
+    dp(flag);
 
-//    auto solution = test_x(x, flag, p, mode_str);
-//    auto reward = std::get<float>(solution.back().back());
-//    if (reward > best_reward) {
-//        best_reward = reward;
-//        best_results = solution;
-//    }
+    auto solution = trace_solution(opt, flag, N);
+    auto reward = std::get<float>(solution.back().back());
+    auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}.txt", mode_str, T, lambda);
 
-
-
-    std::string tc_num = std::regex_replace(
-            p.parent_path().stem().string(),
-            std::regex("[^0-9]*([0-9]+).*"),
-            std::string("$1")
-    );
     auto end_overall = std::chrono::steady_clock::now();
-//    result_to_csv(csv_file, mode_str, std::stoi(tc_num), best_X, lambda, best_reward,
-//                  std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0, table_size);
+    auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(end_overall - begin_initial).count() / 1000000.0;
+
+    print_to_file(out_path.string(), solution, time_delta);
+    result_to_csv(csv_file, mode_str, p.parent_path().stem().string(), lambda, reward,time_delta, table_size);
 
     std::cout << "==================================\n";
 
