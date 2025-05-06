@@ -180,8 +180,13 @@ int main(int argc, char **argv) {
                     opt_path.at(n).at(m).push_back(path);
                     continue;
                 } else {
+                    float time = u[n].ddl - u[n].tier[k].time;
                     if (!s[m].relay) {
-                        graph.update_timeslot(u[n].data, u[n].ddl - u[n].tier[k].time);
+                        if (time <= 0) {
+                            opt_path.at(n).at(m).push_back(path);
+                            continue;
+                        }
+                        graph.update_timeslot(u[n].data, time);
                         auto result = graph.shortest_path(u[n].name, s[m].name);
                         if (result == std::nullopt) {
                             opt_path.at(n).at(m).push_back(path);
@@ -194,7 +199,7 @@ int main(int argc, char **argv) {
                         if (!e) {
                             opt_path.at(n).at(m).push_back(path);
                         }
-                        auto X_ub = std::floor((u[n].ddl - u[n].tier[k].time) / (T * z));
+                        auto X_ub = std::floor(time / (T * z));
                         path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
                         opt_path.at(n).at(m).push_back(path);
                     }
