@@ -181,11 +181,11 @@ int main(int argc, char **argv) {
                     continue;
                 } else {
                     float time = u[n].ddl - u[n].tier[k].time;
+                    if (time <= 0) {
+                        opt_path.at(n).at(m).push_back(path);
+                        continue;
+                    }
                     if (!s[m].relay) {
-                        if (time <= 0) {
-                            opt_path.at(n).at(m).push_back(path);
-                            continue;
-                        }
                         graph.update_timeslot(u[n].data, time);
                         auto result = graph.shortest_path(u[n].name, s[m].name);
                         if (result == std::nullopt) {
@@ -198,6 +198,7 @@ int main(int argc, char **argv) {
                         auto e = graph.is_connected(u[n].name, s[m].name);
                         if (!e) {
                             opt_path.at(n).at(m).push_back(path);
+                            continue;
                         }
                         auto X_ub = std::floor(time / (T * z));
                         path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
