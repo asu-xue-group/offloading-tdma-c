@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();
     int flag;
     graph = Graph();
-    opt_path.push_back(std::vector<std::vector<OPT_PATH *>>());
+    opt_path.emplace_back();
 
     // Check commandline arguments
     if (argc < 2) {
@@ -169,10 +169,10 @@ int main(int argc, char **argv) {
 
     // Pre-compute the best offloading path from user to any server, given any tier
     for (int n = 0; n <= N; n++) {
-        opt_path.push_back(std::vector<std::vector<OPT_PATH *>>());
+        opt_path.emplace_back();
         if (n == 0) continue;
         for (int m = 0; m <= M + L; m++) {
-            opt_path.at(n).push_back(std::vector<OPT_PATH *>());
+            opt_path.at(n).emplace_back();
             if (m == 0) continue;
             for (int k = 0; k <= K; k++) {
                 auto *path = new OPT_PATH;
@@ -186,13 +186,14 @@ int main(int argc, char **argv) {
                         continue;
                     }
                     if (!s[m].relay) {
-                        graph.update_timeslot(u[n].data, time);
+                        auto X_ub = graph.update_timeslot(u[n].data, time);
                         auto result = graph.shortest_path(u[n].name, s[m].name);
                         if (result == std::nullopt) {
                             opt_path.at(n).at(m).push_back(path);
                             continue;
                         }
                         std::tie(path->path, path->timeslots, path->required_T) = result.value();
+                        path->X_n = X_ub;
                         opt_path.at(n).at(m).push_back(path);
                     } else {
                         auto e = graph.is_connected(u[n].name, s[m].name);
@@ -202,6 +203,7 @@ int main(int argc, char **argv) {
                         }
                         auto X_ub = std::floor(time / (T * z));
                         path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
+                        path->X_n = static_cast<int>(X_ub);
                         opt_path.at(n).at(m).push_back(path);
                     }
                 }

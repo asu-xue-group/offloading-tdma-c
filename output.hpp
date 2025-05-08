@@ -53,15 +53,17 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
             auto opt_path_obj = opt_path.at(o0).at(o1).at(o2);
             auto path = opt_path_obj->path;
             auto timeslots = opt_path_obj->timeslots;
-            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots\n",
-                    o0, o1, o2, o3);
+            auto X_n = opt_path_obj->X_n;
+            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d\n",
+                    o0, o1, o2, o3, X_n);
             total_ts_used += o3;
             if (path.size() > 2) {
                 fprintf(fp, "\t> The offloading path is %s\n", path_to_str(path, timeslots).c_str());
             }
         } else {
-            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots\n",
-                    o0, o1 - M, o2, o3);
+            auto X_n = opt_path.at(o0).at(o1).at(o2)->X_n;
+            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d\n",
+                    o0, o1 - M, o2, o3, X_n);
             total_ts_used += o3;
         }
     }

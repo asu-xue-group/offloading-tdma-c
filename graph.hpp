@@ -184,7 +184,7 @@ public:
     }
 
     // Here we assume that the transmission over multihop occurs simultaneously
-    void update_timeslot(const float data, const float time) {
+    int update_timeslot(const float data, const float time) {
         // X_ub is the maximum # of timeslots this transmission can use given the available time
         auto X_ub = std::floor(time / (T * z));
 
@@ -194,6 +194,8 @@ public:
                 dest.timeslot = std::ceil(data / (X_ub * z * bandwidth * log2(1 + dest.snr)));
             }
         }
+
+        return static_cast<int>(X_ub);
     }
 
     // Get node details by name

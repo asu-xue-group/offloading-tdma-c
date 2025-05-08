@@ -51,6 +51,7 @@ struct OPT {
 
 struct OPT_PATH {
     int required_T = -1;
+    int X_n = -1;
     std::vector<std::string> path;
     std::vector<int> timeslots;
 };
