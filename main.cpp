@@ -227,7 +227,12 @@ int main(int argc, char **argv) {
     dp(flag);
 
     auto solution = trace_solution(opt, flag, N);
-    auto reward = std::get<float>(solution.back().back());
+    float reward = 0.0;
+    if (std::holds_alternative<int>(solution.back().back())) {
+        reward = static_cast<float>(std::get<int>(solution.back().back()));
+    } else {
+        reward = std::get<float>(solution.back().back());
+    }
     auto out_path = p.parent_path() / std::format("output_{}_T{}_L{}.txt", mode_str, T, lambda);
 
     auto end_overall = std::chrono::steady_clock::now();

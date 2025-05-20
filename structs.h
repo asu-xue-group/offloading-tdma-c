@@ -46,7 +46,7 @@ struct OPT {
 //    unsigned char kn;         // this user is assigned to accuracy k
     unsigned char solution;   // multiplexed server and accuracy
     unsigned char slot;      // the number of time slots assigned to this user
-    float reward;     // the corresponding optimal value
+    unsigned char reward;     // the corresponding optimal value
 };
 
 struct OPT_PATH {

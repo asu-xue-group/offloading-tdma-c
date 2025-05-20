@@ -34,7 +34,12 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
 
     // o[0] = user index, o[1] = server index, o[2] = algo index, o[3] = timeslots allocated, o[4] = reward
     fprintf(fp, "T=%d, lambda=%d\n", T, lambda);
-    fprintf(fp, "Optimal value: %f\n\n", std::get<float>(solution.back().back()));
+    // test the type of solution
+    if (std::holds_alternative<int>(solution.back().back())) {
+        fprintf(fp, "Optimal value: %d\n\n", std::get<int>(solution.back().back()));
+    } else {
+        fprintf(fp, "Optimal value: %f\n\n", std::get<float>(solution.back().back()));
+    }
     fprintf(fp, "Optimal solution:\n");
     int total_ts_used = 0;
     for (const auto &o: solution) {
