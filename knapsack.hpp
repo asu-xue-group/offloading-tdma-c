@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <cmath>
 #include "global.h"
 #include "structs.h"
 #include "subs.hpp"
@@ -16,7 +17,7 @@
 extern OPT *opt;
 extern long long table_size;
 extern Graph graph;
-extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
+
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
@@ -41,7 +42,7 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 
 
 std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
-    auto val = 0.0f;
+    auto val = 0.0;
     if (n > 1) {
         val = opt[get_idx(n - 1, t, combo, mode)].reward;
     }
@@ -57,9 +58,9 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
     // Iterate over all servers
     for (int m = 0; m <= M + L; m++) {
         // Iterate over offloading tiers
+
         for (int k = 1; k <= K; k++) {
-            auto prev_opt = 0.0f;
-            auto required_T = 0;
+            double prev_opt = 0.0;
             // Local processing
             if (m == 0) {
                 if (u[n].cpu < static_cast<float>(u[n].tier[k].cpu) || u[n].ram < static_cast<float>(u[n].tier[k].ram)) {
@@ -68,33 +69,64 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 if (n > 1) {
                     prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
                 }
+                auto delay = std::max(u[n].tier[k].time - u[n].ddl, 0.0f);
+                auto reward = calc_reward(n, k, delay) + prev_opt;
+                if (reward > val) {
+                    val = reward;
+                    m_opt = m;
+                    k_opt = k;
+                    slot_opt = 0;
+                }
             } else {
-                auto res = opt_path.at(n).at(m).at(k);
-                if (res->required_T == -1) continue;
-                required_T = res->required_T;
-
+                auto X_min = static_cast<int>(std::floor((u[n].ddl - u[n].tier[k].time) / (T * z)));
+                auto X_max = static_cast<int>(std::ceil((u[n].ddl - (std::log(ret_ratio)/decay) - u[n].tier[k].time) / (T * z)));
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
                 update_combo(new_combo, n, m, k, mode);
-                // Check the timeslot
-                auto new_t = t - required_T;
-
                 // Check if resources are available
-                if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0 || new_t < 0) {
+                if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0) {
                     continue;
                 }
-                if (n > 1) {
-                    prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
+
+                for (int X = X_min; X <= X_max; X++) {
+                    int tmp_T = 0;
+                    std::vector<int> tmp_slot;
+                    std::vector<std::string> tmp_path_str;
+                    // Update edge cost given data size and X
+                    graph.update_timeslot(u[n].data, X);
+                    // Find the best path from user to server
+                    auto result = graph.shortest_path(u[n].name, s[m].name);
+                    if (result == std::nullopt) {
+                        continue;
+                    }
+                    std::tie(tmp_path_str, tmp_slot, tmp_T) = result.value();
+                    if (tmp_T == std::numeric_limits<int>::max()) {
+                        continue;
+                    }
+                    int new_t = t - tmp_T;
+
+                    if (new_t < 0) {
+                        continue;
+                    }
+
+                    if (n > 1) {
+                        prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
+                    }
+
+                    auto delay = std::max(u[n].tier[k].time + X * z * T - u[n].ddl, 0.0);
+                    auto reward = calc_reward(n, k, delay) + prev_opt;
+
+                    if (reward > val) {
+                        val = reward;
+                        m_opt = m;
+                        k_opt = k;
+                        slot_opt = tmp_T;
+                        opt_path[n][m][k] -> X_n = X;
+                        opt_path[n][m][k] -> required_T = tmp_T;
+                        opt_path[n][m][k] -> timeslots = tmp_slot;
+                        opt_path[n][m][k] -> path = tmp_path_str;
+                    }
                 }
-            }
-
-            auto reward = static_cast<float>(u[n].tier[k].reward) + prev_opt;
-
-            if (reward > val) {
-                val = reward;
-                m_opt = m;
-                k_opt = k;
-                slot_opt = required_T;
             }
         }
     }

@@ -176,37 +176,38 @@ int main(int argc, char **argv) {
             if (m == 0) continue;
             for (int k = 0; k <= K; k++) {
                 auto *path = new OPT_PATH;
-                if (k == 0) {
-                    opt_path.at(n).at(m).push_back(path);
-                    continue;
-                } else {
-                    float time = u[n].ddl - u[n].tier[k].time;
-                    if (time <= 0) {
-                        opt_path.at(n).at(m).push_back(path);
-                        continue;
-                    }
-                    if (!s[m].relay) {
-                        auto X_ub = graph.update_timeslot(u[n].data, time);
-                        auto result = graph.shortest_path(u[n].name, s[m].name);
-                        if (result == std::nullopt) {
-                            opt_path.at(n).at(m).push_back(path);
-                            continue;
-                        }
-                        std::tie(path->path, path->timeslots, path->required_T) = result.value();
-                        path->X_n = X_ub;
-                        opt_path.at(n).at(m).push_back(path);
-                    } else {
-                        auto e = graph.is_connected(u[n].name, s[m].name);
-                        if (!e) {
-                            opt_path.at(n).at(m).push_back(path);
-                            continue;
-                        }
-                        auto X_ub = std::floor(time / (T * z));
-                        path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
-                        path->X_n = static_cast<int>(X_ub);
-                        opt_path.at(n).at(m).push_back(path);
-                    }
-                }
+                opt_path.at(n).at(m).push_back(path);
+//                if (k == 0) {
+//                    opt_path.at(n).at(m).push_back(path);
+//                    continue;
+//                } else {
+//                    float time = u[n].ddl - u[n].tier[k].time;
+//                    if (time <= 0) {
+//                        opt_path.at(n).at(m).push_back(path);
+//                        continue;
+//                    }
+//                    if (!s[m].relay) {
+//                        auto X_ub = graph.update_timeslot(u[n].data, time);
+//                        auto result = graph.shortest_path(u[n].name, s[m].name);
+//                        if (result == std::nullopt) {
+//                            opt_path.at(n).at(m).push_back(path);
+//                            continue;
+//                        }
+//                        std::tie(path->path, path->timeslots, path->required_T) = result.value();
+//                        path->X_n = X_ub;
+//                        opt_path.at(n).at(m).push_back(path);
+//                    } else {
+//                        auto e = graph.is_connected(u[n].name, s[m].name);
+//                        if (!e) {
+//                            opt_path.at(n).at(m).push_back(path);
+//                            continue;
+//                        }
+//                        auto X_ub = std::floor(time / (T * z));
+//                        path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
+//                        path->X_n = static_cast<int>(X_ub);
+//                        opt_path.at(n).at(m).push_back(path);
+//                    }
+//                }
             }
         }
     }
