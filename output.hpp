@@ -52,23 +52,24 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
             if (o2 == 0) {
                 fprintf(fp, "User %d is not scheduled\n", o0);
             } else {
-                fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
+                fprintf(fp, "User %d is assigned to local processing with algo %d. R = %d\n", o0, o2, u[o0].tier[o2].reward);
             }
         } else if (o1 <= M) {
             auto opt_path_obj = opt_path.at(o0).at(o1).at(o2);
             auto path = opt_path_obj->path;
             auto timeslots = opt_path_obj->timeslots;
             auto X_n = opt_path_obj->X_n;
-            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d\n",
-                    o0, o1, o2, o3, X_n);
+            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d. R = %d\n",
+                    o0, o1, o2, o3, X_n, u[o0].tier[o2].reward);
+
             total_ts_used += o3;
             if (path.size() > 2) {
                 fprintf(fp, "\t> The offloading path is %s\n", path_to_str(path, timeslots).c_str());
             }
         } else {
             auto X_n = opt_path.at(o0).at(o1).at(o2)->X_n;
-            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d\n",
-                    o0, o1 - M, o2, o3, X_n);
+            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d. R = %d\n",
+                    o0, o1 - M, o2, o3, X_n, u[o0].tier[o2].reward);
             total_ts_used += o3;
         }
     }
