@@ -28,7 +28,8 @@ std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path; // N x (M+L) x K
 int K, M, L, N;
 long long table_size;
 Graph graph;
-
+int X_total = 0;
+int X_count = 0;
 
 int main(int argc, char **argv) {
     std::chrono::steady_clock::time_point begin_initial = std::chrono::steady_clock::now();

@@ -8,6 +8,7 @@
 #include "subs.hpp"
 
 extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
+extern int X_total, X_count;
 
 std::string path_to_str(std::vector<std::string> path, std::vector<int> timeslots) {
     std::ostringstream oss;
@@ -48,37 +49,56 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
         auto o2 = std::get<int>(o[2]);
         auto o3 = std::get<int>(o[3]);
 
+        double delay, real_reward;
+        // If the task is delayed, show the delay and reward loss
+        if (o1 != 0) {
+            delay = std::max(u[o0].tier[o2].time + o3 * z * T - u[o0].ddl, 0.0);
+            real_reward = calc_reward(o0, o2, delay);
+        }
+
         if (o1 == 0) {
             if (o2 == 0) {
                 fprintf(fp, "User %d is not scheduled\n", o0);
             } else {
-                fprintf(fp, "User %d is assigned to local processing with algo %d\n", o0, o2);
+                fprintf(fp, "User %d is assigned to local processing with algo %d. R = %d\n", o0, o2, u[o0].tier[o2].reward);
             }
         } else if (o1 <= M) {
             auto opt_path_obj = opt_path.at(o0).at(o1).at(o2);
             auto path = opt_path_obj->path;
             auto timeslots = opt_path_obj->timeslots;
             auto X_n = opt_path_obj->X_n;
-            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d\n",
-                    o0, o1, o2, o3, X_n);
+            fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d. R = %d\n",
+                    o0, o1, o2, o3, X_n, u[o0].tier[o2].reward);
+
+            if (delay > 0) {
+                fprintf(fp, "\t> The task is delayed by %.2f seconds, and the actual reward is %.5f\n",
+                        delay, real_reward);
+            }
+
             total_ts_used += o3;
             if (path.size() > 2) {
                 fprintf(fp, "\t> The offloading path is %s\n", path_to_str(path, timeslots).c_str());
             }
         } else {
             auto X_n = opt_path.at(o0).at(o1).at(o2)->X_n;
-            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d\n",
-                    o0, o1 - M, o2, o3, X_n);
+            fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d. R = %d\n",
+                    o0, o1 - M, o2, o3, X_n, u[o0].tier[o2].reward);
             total_ts_used += o3;
+
+            if (delay > 0) {
+                fprintf(fp, "\t> The task is delayed by %.2f seconds, and the actual reward is %.5f\n",
+                        delay, real_reward);
+            }
         }
     }
     fprintf(fp, "\nTime taken: %.2f seconds\n", time);
+    fprintf(fp, "Average X_n: %.2f\n", static_cast<float>(X_total) / X_count);
     fprintf(fp, "Total timeslots used: %d/%d", total_ts_used, T);
 
     fclose(fp);
 }
 
-void result_to_csv(const std::filesystem::path& filename, const std::string& flag, std::string tc_num, int _lambda, float reward, double time, long long table_size) {
+void result_to_csv(const std::filesystem::path& filename, const std::string& flag, const std::string& tc_num, int _lambda, float reward, double time, long long table_size) {
     FILE *fp = fopen(filename.string().c_str(), "a");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());

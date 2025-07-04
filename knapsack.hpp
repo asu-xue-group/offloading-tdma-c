@@ -17,6 +17,7 @@
 extern OPT *opt;
 extern long long table_size;
 extern Graph graph;
+extern int X_total, X_count;
 
 
 void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
@@ -87,6 +88,8 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0) {
                     continue;
                 }
+                X_total += X_max - X_min + 1;
+                X_count++;
 
                 for (int X = X_min; X <= X_max; X++) {
                     int tmp_T = 0;
