@@ -112,7 +112,7 @@ long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
 
 // Exponential decay function
 double calc_reward(int n, int k, double delay) {
-    return u[n].tier[k].reward * std::pow(M_E, -decay * delay);
+    return std::min((double) u[n].tier[k].reward, u[n].tier[k].reward * std::pow(M_E, -decay * delay));
 }
 
 

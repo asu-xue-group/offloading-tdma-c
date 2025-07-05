@@ -33,63 +33,65 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
         exit(0);
     }
 
-    // o[0] = user index, o[1] = server index, o[2] = algo index, o[3] = timeslots allocated, o[4] = reward
+    // o[0] = user index, o[1] = server index, o[2] = algo index, o[3] = timeslots allocated, o[4] = frames used, o[5] = reward
     fprintf(fp, "T=%d, lambda=%d\n", T, lambda);
     // test the type of solution
     if (std::holds_alternative<int>(solution.back().back())) {
         fprintf(fp, "Optimal value: %d\n\n", std::get<int>(solution.back().back()));
     } else {
-        fprintf(fp, "Optimal value: %f\n\n", std::get<float>(solution.back().back()));
+        fprintf(fp, "Optimal value: %.5f\n\n", std::get<float>(solution.back().back()));
     }
     fprintf(fp, "Optimal solution:\n");
     int total_ts_used = 0;
+    float tmp_reward = 0;
+
     for (const auto &o: solution) {
-        auto o0 = std::get<int>(o[0]);
-        auto o1 = std::get<int>(o[1]);
-        auto o2 = std::get<int>(o[2]);
-        auto o3 = std::get<int>(o[3]);
+        auto n = std::get<int>(o[0]);
+        auto m = std::get<int>(o[1]);
+        auto k = std::get<int>(o[2]);
+        auto slot = std::get<int>(o[3]);
+        auto frame = std::get<int>(o[4]);
+        auto reward = std::get<float>(o[5]);
 
         double delay, real_reward;
         // If the task is delayed, show the delay and reward loss
-        if (o1 != 0) {
-            delay = std::max(u[o0].tier[o2].time + o3 * z * T - u[o0].ddl, 0.0);
-            real_reward = calc_reward(o0, o2, delay);
+        if (m != 0) {
+            delay = std::max(u[n].tier[k].time + frame * z * T - u[n].ddl, 0.0);
+        } else {
+            delay = std::max(u[n].tier[k].time - u[n].ddl, 0.0f);
         }
+        real_reward = calc_reward(n, k, delay);
 
-        if (o1 == 0) {
-            if (o2 == 0) {
-                fprintf(fp, "User %d is not scheduled\n", o0);
+        if (m == 0) {
+            if (k == 0) {
+                fprintf(fp, "User %d is not scheduled\n", n);
             } else {
-                fprintf(fp, "User %d is assigned to local processing with algo %d. R = %d\n", o0, o2, u[o0].tier[o2].reward);
+                fprintf(fp, "User %d is assigned to local processing with algo %d. R = %d\n",
+                        n, k, u[n].tier[k].reward);
             }
-        } else if (o1 <= M) {
-            auto opt_path_obj = opt_path.at(o0).at(o1).at(o2);
+        } else if (m <= M) {
+            auto opt_path_obj = opt_path.at(n).at(m).at(k);
             auto path = opt_path_obj->path;
             auto timeslots = opt_path_obj->timeslots;
-            auto X_n = opt_path_obj->X_n;
             fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d. R = %d\n",
-                    o0, o1, o2, o3, X_n, u[o0].tier[o2].reward);
+                    n, m, k, slot, frame, u[n].tier[k].reward);
 
-            if (delay > 0) {
-                fprintf(fp, "\t> The task is delayed by %.2f seconds, and the actual reward is %.5f\n",
-                        delay, real_reward);
-            }
-
-            total_ts_used += o3;
+            total_ts_used += slot;
             if (path.size() > 2) {
                 fprintf(fp, "\t> The offloading path is %s\n", path_to_str(path, timeslots).c_str());
             }
         } else {
-            auto X_n = opt_path.at(o0).at(o1).at(o2)->X_n;
             fprintf(fp, "User %d is assigned to relay %d with algo %d, and is assigned %d time slots. X_n = %d. R = %d\n",
-                    o0, o1 - M, o2, o3, X_n, u[o0].tier[o2].reward);
-            total_ts_used += o3;
-
-            if (delay > 0) {
-                fprintf(fp, "\t> The task is delayed by %.2f seconds, and the actual reward is %.5f\n",
-                        delay, real_reward);
-            }
+                    n, m - M, k, slot, frame, u[n].tier[k].reward);
+            total_ts_used += slot;
         }
+
+        if (delay > 0) {
+            fprintf(fp, "\t> The task is delayed by %.2f seconds, and the actual reward is %.5f\n",
+                    delay, real_reward);
+        }
+
+        tmp_reward += reward;
     }
     fprintf(fp, "\nTime taken: %.2f seconds\n", time);
     fprintf(fp, "Average X_n: %.2f\n", static_cast<float>(X_total) / X_count);
@@ -110,11 +112,17 @@ void result_to_csv(const std::filesystem::path& filename, const std::string& fla
 }
 
 
-void print_results(const std::vector<std::vector<int>> &solution, int n) {
-    printf("n=%d, opt=%d\n", n, solution.back().back());
+void print_results(const std::vector<std::vector<std::variant<int, float>>> &solution, int n) {
+    printf("n=%d, opt=%f\n", n, std::get<float>(solution.back().back()));
     printf("Optimal solution:\n");
     for (const auto &o: solution) {
-        printf("n=%d, m=%d, k=%d, slot=%d, reward=%d\n", o[0], o[1], o[2], o[3], o[4]);
+        auto n_s = std::get<int>(o[0]);
+        auto m = std::get<int>(o[1]);
+        auto k = std::get<int>(o[2]);
+        auto slot = std::get<int>(o[3]);
+        auto frame = std::get<int>(o[4]);
+        auto reward = std::get<float>(o[5]);
+        printf("n=%d, m=%d, k=%d, slot=%d, frame=%d, reward=%f\n", n_s, m, k, slot, frame, reward);
     }
     printf("\n");
 }
@@ -135,8 +143,9 @@ std::vector<std::vector<std::variant<int, float>>> trace_solution(OPT *opt, int 
         auto sol = opt[index].solution;
         auto reward = opt[index].reward;
         auto slot_opt = opt[index].slot;
+        auto X = opt[index].num_frame;
         auto [m_opt, k_opt] = demux_solution(sol);
-        solution.at(n - 1) = std::vector<std::variant<int, float>>{n, m_opt, k_opt, slot_opt, reward};
+        solution.at(n - 1) = std::vector<std::variant<int, float>>{n, m_opt, k_opt, slot_opt, X, reward};
         if (m_opt == 0) {
             continue;
         }

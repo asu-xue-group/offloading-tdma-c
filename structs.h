@@ -46,12 +46,13 @@ struct OPT {
 //    unsigned char kn;         // this user is assigned to accuracy k
     unsigned char solution;   // multiplexed server and accuracy
     unsigned char slot;      // the number of time slots assigned to this user
+    unsigned char num_frame; // the number of frames assigned to this user
     float reward;     // the corresponding optimal value
 };
 
 struct OPT_PATH {
-    int required_T = -1;
-    int X_n = -1;
+//    int required_T = -1;
+//    int X_n = -1;
     std::vector<std::string> path;
     std::vector<int> timeslots;
 };

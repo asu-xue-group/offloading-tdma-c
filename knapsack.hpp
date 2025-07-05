@@ -42,7 +42,7 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 }
 
 
-std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
+std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
     auto val = 0.0;
     if (n > 1) {
         val = opt[get_idx(n - 1, t, combo, mode)].reward;
@@ -50,10 +50,11 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
     int m_opt = 0;
     int k_opt = 0;
     int slot_opt = 0;
+    int X_opt = 0;
 
     // Edge case where everything is zero
     if (T == 0 && std::all_of(combo.begin() + 1, combo.end(), [](int i) { return i == 0; })) {
-        return {0, 0, 1, 0};
+        return {0, 0, 1, 0, 0};
     }
 
     // Iterate over all servers
@@ -61,9 +62,9 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
         // Iterate over offloading tiers
 
         for (int k = 1; k <= K; k++) {
-            double prev_opt = 0.0;
             // Local processing
             if (m == 0) {
+                double prev_opt = 0.0;
                 if (u[n].cpu < static_cast<float>(u[n].tier[k].cpu) || u[n].ram < static_cast<float>(u[n].tier[k].ram)) {
                     continue;
                 }
@@ -80,6 +81,9 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 }
             } else {
                 auto X_min = static_cast<int>(std::floor((u[n].ddl - u[n].tier[k].time) / (T * z)));
+                if (X_min <= 0) {
+                    X_min = 1; // Ensure X_min is at least 1
+                }
                 auto X_max = static_cast<int>(std::ceil((u[n].ddl - (std::log(ret_ratio)/decay) - u[n].tier[k].time) / (T * z)));
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
@@ -92,6 +96,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 X_count++;
 
                 for (int X = X_min; X <= X_max; X++) {
+                    double prev_opt = 0.0;
                     int tmp_T = 0;
                     std::vector<int> tmp_slot;
                     std::vector<std::string> tmp_path_str;
@@ -124,8 +129,9 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                         m_opt = m;
                         k_opt = k;
                         slot_opt = tmp_T;
-                        opt_path[n][m][k] -> X_n = X;
-                        opt_path[n][m][k] -> required_T = tmp_T;
+                        X_opt = X;
+//                        opt_path[n][m][k] -> X_n = X;
+//                        opt_path[n][m][k] -> required_T = tmp_T;
                         opt_path[n][m][k] -> timeslots = tmp_slot;
                         opt_path[n][m][k] -> path = tmp_path_str;
                     }
@@ -134,7 +140,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
         }
     }
     
-    return {val, m_opt, k_opt, slot_opt};
+    return {val, m_opt, k_opt, slot_opt, X_opt};
 }
 
 
@@ -175,10 +181,11 @@ void dp(int mode) {
                     std::cerr << "Table size exceeded: accessing " << next_idx << " out of " << table_size << std::endl;
 //                    exit(1);
                 }
-                auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
+                auto [reward, m_opt, k_opt, slot_opt, X_opt] = calc_opt(n, t, cc, mode);
                 auto solution = mux_solution(m_opt, k_opt);
                 opt[next_idx].solution = solution;
                 opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
+                opt[next_idx].num_frame = static_cast<unsigned char>(X_opt);
                 opt[next_idx].reward = reward;
             }
         }
