@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <regex>
+#include <set>
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 #include "global.h"
@@ -24,7 +25,7 @@ namespace fs = std::filesystem;
 SERVER *s;
 USER *u;
 OPT *opt;
-std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path; // N x (M+L) x K
+std::vector<std::vector<std::vector<std::set<OPT_PATH *>>>> opt_path; // N x (M+L) x K x X
 int K, M, L, N;
 long long table_size;
 Graph graph;
@@ -176,39 +177,46 @@ int main(int argc, char **argv) {
             opt_path.at(n).emplace_back();
             if (m == 0) continue;
             for (int k = 0; k <= K; k++) {
-                auto *path = new OPT_PATH;
-                opt_path.at(n).at(m).push_back(path);
-//                if (k == 0) {
-//                    opt_path.at(n).at(m).push_back(path);
-//                    continue;
-//                } else {
-//                    float time = u[n].ddl - u[n].tier[k].time;
-//                    if (time <= 0) {
-//                        opt_path.at(n).at(m).push_back(path);
-//                        continue;
-//                    }
-//                    if (!s[m].relay) {
-//                        auto X_ub = graph.update_timeslot(u[n].data, time);
-//                        auto result = graph.shortest_path(u[n].name, s[m].name);
-//                        if (result == std::nullopt) {
-//                            opt_path.at(n).at(m).push_back(path);
-//                            continue;
-//                        }
-//                        std::tie(path->path, path->timeslots, path->required_T) = result.value();
-//                        path->X_n = X_ub;
-//                        opt_path.at(n).at(m).push_back(path);
-//                    } else {
-//                        auto e = graph.is_connected(u[n].name, s[m].name);
-//                        if (!e) {
-//                            opt_path.at(n).at(m).push_back(path);
-//                            continue;
-//                        }
-//                        auto X_ub = std::floor(time / (T * z));
-//                        path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
-//                        path->X_n = static_cast<int>(X_ub);
-//                        opt_path.at(n).at(m).push_back(path);
-//                    }
-//                }
+                opt_path.at(n).at(m).emplace_back();
+                if (k == 0) continue;
+
+                auto X_min = static_cast<int>(std::floor((u[n].ddl - u[n].tier[k].time) / (T * z)));
+                if (X_min <= 0) {
+                    X_min = 1; // Ensure X_min is at least 1
+                }
+                auto X_max = static_cast<int>(std::ceil((u[n].ddl - (std::log(ret_ratio)/decay) - u[n].tier[k].time) / (T * z)));
+
+                if (X_max < 1) continue;
+
+                auto paths = std::set<OPT_PATH *>();
+
+                X_total += X_max - X_min + 1;
+                X_count++;
+
+                for (int X = X_min; X <= X_max; X++) {
+                    auto tmp_path_str = std::vector<std::string>();
+                    auto tmp_slot = std::vector<int>();
+                    int tmp_T = 0;
+                    // Update edge cost given data size and X
+                    graph.update_timeslot(u[n].data, X);
+                    // Find the best path from user to server
+                    auto result = graph.shortest_path(u[n].name, s[m].name);
+                    if (result == std::nullopt) {
+                        continue;
+                    }
+                    std::tie(tmp_path_str, tmp_slot, tmp_T) = result.value();
+                    if (tmp_T == std::numeric_limits<int>::max()) {
+                        continue;
+                    }
+                    auto *path = new OPT_PATH;
+                    path->path = tmp_path_str;
+                    path->timeslots = tmp_slot;
+                    path->required_T = tmp_T;
+                    path->X_n = static_cast<int>(std::floor(X / (T * z)));
+                    paths.insert(path);
+                }
+
+                opt_path.at(n).at(m).at(k) = paths;
             }
         }
     }

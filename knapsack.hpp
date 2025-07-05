@@ -80,11 +80,6 @@ std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<i
                     slot_opt = 0;
                 }
             } else {
-                auto X_min = static_cast<int>(std::floor((u[n].ddl - u[n].tier[k].time) / (T * z)));
-                if (X_min <= 0) {
-                    X_min = 1; // Ensure X_min is at least 1
-                }
-                auto X_max = static_cast<int>(std::ceil((u[n].ddl - (std::log(ret_ratio)/decay) - u[n].tier[k].time) / (T * z)));
                 // Check the remaining cpu, ram, timeslot
                 auto new_combo = combo;
                 update_combo(new_combo, n, m, k, mode);
@@ -92,26 +87,14 @@ std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<i
                 if (new_combo[2 * m - 1] < 0 || new_combo[2 * m] < 0) {
                     continue;
                 }
-                X_total += X_max - X_min + 1;
-                X_count++;
 
-                for (int X = X_min; X <= X_max; X++) {
+                auto paths = opt_path.at(n).at(m).at(k);
+                for (auto &path: paths) {
+                    auto X = path->X_n;
+                    auto req_T = path->required_T;
                     double prev_opt = 0.0;
-                    int tmp_T = 0;
-                    std::vector<int> tmp_slot;
-                    std::vector<std::string> tmp_path_str;
-                    // Update edge cost given data size and X
-                    graph.update_timeslot(u[n].data, X);
-                    // Find the best path from user to server
-                    auto result = graph.shortest_path(u[n].name, s[m].name);
-                    if (result == std::nullopt) {
-                        continue;
-                    }
-                    std::tie(tmp_path_str, tmp_slot, tmp_T) = result.value();
-                    if (tmp_T == std::numeric_limits<int>::max()) {
-                        continue;
-                    }
-                    int new_t = t - tmp_T;
+
+                    int new_t = t - req_T;
 
                     if (new_t < 0) {
                         continue;
@@ -128,12 +111,8 @@ std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<i
                         val = reward;
                         m_opt = m;
                         k_opt = k;
-                        slot_opt = tmp_T;
+                        slot_opt = req_T;
                         X_opt = X;
-//                        opt_path[n][m][k] -> X_n = X;
-//                        opt_path[n][m][k] -> required_T = tmp_T;
-                        opt_path[n][m][k] -> timeslots = tmp_slot;
-                        opt_path[n][m][k] -> path = tmp_path_str;
                     }
                 }
             }

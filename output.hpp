@@ -7,7 +7,7 @@
 #include <variant>
 #include "subs.hpp"
 
-extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
+extern std::vector<std::vector<std::vector<std::set<OPT_PATH *>>>> opt_path;
 extern int X_total, X_count;
 
 std::string path_to_str(std::vector<std::string> path, std::vector<int> timeslots) {
@@ -70,9 +70,15 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
                         n, k, u[n].tier[k].reward);
             }
         } else if (m <= M) {
-            auto opt_path_obj = opt_path.at(n).at(m).at(k);
-            auto path = opt_path_obj->path;
-            auto timeslots = opt_path_obj->timeslots;
+            auto paths = opt_path.at(n).at(m).at(k);
+            auto path_obj = paths.begin();
+            for (; path_obj != paths.end(); ++path_obj) {
+                if ((*path_obj)->X_n == frame) {
+                    break;
+                }
+            }
+            auto path = (*path_obj)->path;
+            auto timeslots = (*path_obj)->timeslots;
             fprintf(fp, "User %d is assigned to server %d with algo %d, and is assigned %d timeslots. X_n = %d. R = %d\n",
                     n, m, k, slot, frame, u[n].tier[k].reward);
 

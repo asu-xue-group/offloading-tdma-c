@@ -42,8 +42,6 @@ struct USER {
 
 
 struct OPT {
-//    unsigned char mn;         // this user is assigned to server m, mn=0 means we skip this user.
-//    unsigned char kn;         // this user is assigned to accuracy k
     unsigned char solution;   // multiplexed server and accuracy
     unsigned char slot;      // the number of time slots assigned to this user
     unsigned char num_frame; // the number of frames assigned to this user
@@ -51,8 +49,8 @@ struct OPT {
 };
 
 struct OPT_PATH {
-//    int required_T = -1;
-//    int X_n = -1;
+    int required_T = -1;
+    int X_n = -1;
     std::vector<std::string> path;
     std::vector<int> timeslots;
 };
