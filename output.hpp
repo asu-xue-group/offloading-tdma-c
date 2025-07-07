@@ -146,11 +146,11 @@ std::vector<std::vector<std::variant<int, float>>> trace_solution(OPT *opt, int 
 
     for (int n = num_user; n >= 1; n--) {
         auto index = get_idx(n, curr_t, curr_combo, flag);
-        auto sol = opt[index].solution;
-        auto reward = opt[index].reward;
-        auto slot_opt = opt[index].slot;
-        auto X = opt[index].num_frame;
-        auto [m_opt, k_opt] = demux_solution(sol);
+        auto sol = opt[index].meta;
+        auto reward_q = opt[index].reward_q;
+        uint8_t m_opt, k_opt, slot_opt, X;
+        unpack_meta(sol, m_opt, k_opt, slot_opt, X);
+        auto reward = get_reward(reward_q);
         solution.at(n - 1) = std::vector<std::variant<int, float>>{n, m_opt, k_opt, slot_opt, X, reward};
         if (m_opt == 0) {
             continue;

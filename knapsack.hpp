@@ -45,7 +45,8 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
     auto val = 0.0;
     if (n > 1) {
-        val = opt[get_idx(n - 1, t, combo, mode)].reward;
+        auto tmp = opt[get_idx(n - 1, t, combo, mode)].reward_q;
+        val = get_reward(tmp);
     }
     int m_opt = 0;
     int k_opt = 0;
@@ -69,7 +70,8 @@ std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<i
                     continue;
                 }
                 if (n > 1) {
-                    prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
+                    auto tmp = opt[get_idx(n - 1, t, combo, mode)].reward_q;
+                    prev_opt = get_reward(tmp);
                 }
                 auto delay = std::max(u[n].tier[k].time - u[n].ddl, 0.0f);
                 auto reward = calc_reward(n, k, delay) + prev_opt;
@@ -101,7 +103,8 @@ std::tuple<float, int, int, int, int> calc_opt(int n, int t, const std::vector<i
                     }
 
                     if (n > 1) {
-                        prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
+                        auto tmp = opt[get_idx(n - 1, new_t, new_combo, mode)].reward_q;
+                        prev_opt = get_reward(tmp);
                     }
 
                     auto delay = std::max(u[n].tier[k].time + X * z * T - u[n].ddl, 0.0);
@@ -161,11 +164,10 @@ void dp(int mode) {
 //                    exit(1);
                 }
                 auto [reward, m_opt, k_opt, slot_opt, X_opt] = calc_opt(n, t, cc, mode);
-                auto solution = mux_solution(m_opt, k_opt);
-                opt[next_idx].solution = solution;
-                opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
-                opt[next_idx].num_frame = static_cast<unsigned char>(X_opt);
-                opt[next_idx].reward = reward;
+                auto solution = pack_meta(m_opt, k_opt, slot_opt, X_opt);
+                auto reward_q = qnt_reward(reward);
+                opt[next_idx].meta = solution;
+                opt[next_idx].reward_q = reward_q;
             }
         }
 

@@ -41,12 +41,47 @@ struct USER {
 };
 
 
+/* ┌─ meta (32 b) ───────────────────────────────────────────────┐
+   │  3             2             1             0                │
+   │3 1             4             6             0                │
+   ├┴──┬─┬──────┬──────┬──────────┬──────────┬───────────────────┤
+   │RSV│ num_frame     │   slot   │  k  │  m │  (bit index)      │
+   └───┴─┴──────┴──────┴──────────┴──────────┴───────────────────┘
+      24-31    12-17    6-11       4-5    0-3      = 18 used bits
+      ^ 14 spare bits for flags / larger ranges ↓                 */
+
+#pragma pack(push,1)               // eliminate alignment padding
 struct OPT {
-    unsigned char solution;   // multiplexed server and accuracy
-    unsigned char slot;      // the number of time slots assigned to this user
-    unsigned char num_frame; // the number of frames assigned to this user
-    float reward;     // the corresponding optimal value
+    uint32_t meta;     // packed control bits (see above)
+    uint16_t reward_q; // reward ×100, fixed-point (0-655.35)
 };
+#pragma pack(pop)
+
+static_assert(sizeof(OPT)==6, "OPT6 must be 6 bytes");
+
+inline uint32_t pack_meta(uint8_t m, uint8_t k,
+                          uint8_t slot, uint8_t frame)
+{
+    return (m & 0x0F)           |               // bits 0-3
+           ((k    & 0x03) << 4) |               // bits 4-5
+           ((slot & 0x3F) << 6) |               // bits 6-11
+           ((frame& 0x3F) << 12);               // bits 12-17
+    /* bits 18-31 remain 0 (reserved) */
+}
+
+inline void unpack_meta(uint32_t meta,
+                        uint8_t& m, uint8_t& k,
+                        uint8_t& slot, uint8_t& frame)
+{
+    m     =  meta        & 0x0F;
+    k     = (meta >> 4 ) & 0x03;
+    slot  = (meta >> 6 ) & 0x3F;
+    frame = (meta >> 12) & 0x3F;
+}
+
+inline uint16_t qnt_reward(float r){ return std::lround(r * 100.0f); }
+inline float    get_reward(uint16_t q){ return q * 0.01f; }
+
 
 struct OPT_PATH {
     int required_T = -1;

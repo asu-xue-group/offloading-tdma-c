@@ -7,7 +7,6 @@
 #include <fstream>
 #include <regex>
 #include <set>
-#include <unordered_map>
 #include <nlohmann/json.hpp>
 #include "global.h"
 #include "knapsack.hpp"
