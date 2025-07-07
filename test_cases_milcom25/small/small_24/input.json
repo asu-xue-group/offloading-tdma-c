@@ -1,0 +1,172 @@
+{
+    "name": "small_24",
+    "num_user": 5,
+    "num_server": 1,
+    "num_relay": 2,
+    "num_server_tier": 1,
+    "num_user_tier": 2,
+    "servers": [
+        {
+            "name": "Server 1",
+            "x": 347.24,
+            "y": 414.66,
+            "cpu": 8,
+            "ram": 4,
+            "tier": 1
+        }
+    ],
+    "relays": [
+        {
+            "name": "Relay 1",
+            "x": 567.26,
+            "y": 505.76,
+            "cpu": 2,
+            "ram": 2
+        },
+        {
+            "name": "Relay 2",
+            "x": 836.7,
+            "y": 127.79,
+            "cpu": 2,
+            "ram": 2
+        }
+    ],
+    "users": [
+        {
+            "name": "User 1",
+            "x": 742.48,
+            "y": 820.37,
+            "ddl": 15.49,
+            "data": 962.31,
+            "local_cpu": 2.25,
+            "local_ram": 1.03,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 11,
+                    "time": 16.1
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 5,
+                    "time": 8.34
+                }
+            ]
+        },
+        {
+            "name": "User 2",
+            "x": 642.6,
+            "y": 439.24,
+            "ddl": 21.92,
+            "data": 645.89,
+            "local_cpu": 2.34,
+            "local_ram": 0.95,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 3,
+                    "reward": 7,
+                    "time": 8.72
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 6,
+                    "time": 8.24
+                }
+            ]
+        },
+        {
+            "name": "User 3",
+            "x": 215.12,
+            "y": 145.73,
+            "ddl": 24.68,
+            "data": 887.04,
+            "local_cpu": 1.78,
+            "local_ram": 1.22,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 8,
+                    "time": 10.97
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 4,
+                    "time": 10.53
+                }
+            ]
+        },
+        {
+            "name": "User 4",
+            "x": 251.33,
+            "y": 849.63,
+            "ddl": 9.32,
+            "data": 986.6,
+            "local_cpu": 2.09,
+            "local_ram": 0.6,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 7,
+                    "time": 12.11
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 6,
+                    "time": 10.02
+                }
+            ]
+        },
+        {
+            "name": "User 5",
+            "x": 643.61,
+            "y": 342.59,
+            "ddl": 21.52,
+            "data": 897.11,
+            "local_cpu": 1.96,
+            "local_ram": 0.74,
+            "tiers": [
+                {
+                    "tier": 1,
+                    "cpu": 4,
+                    "ram": 2,
+                    "reward": 7,
+                    "time": 16.62
+                },
+                {
+                    "tier": 2,
+                    "cpu": 2,
+                    "ram": 1,
+                    "reward": 4,
+                    "time": 7.44
+                }
+            ]
+        }
+    ],
+    "field_x": 1000,
+    "field_y": 1000,
+    "alpha": 3,
+    "beta": 15,
+    "W": 40,
+    "N": 3e-10,
+    "T": 40,
+    "t0": 10,
+    "P_max": 10,
+    "B": 10.0,
+    "B_total": 40
+}
