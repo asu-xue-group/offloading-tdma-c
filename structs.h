@@ -41,13 +41,14 @@ struct USER {
 };
 
 
+#pragma pack(push,1)          // ensure no alignment padding
 struct OPT {
-//    unsigned char mn;         // this user is assigned to server m, mn=0 means we skip this user.
-//    unsigned char kn;         // this user is assigned to accuracy k
-    unsigned char solution;   // multiplexed server and accuracy
-    unsigned char slot;      // the number of time slots assigned to this user
-    unsigned char reward;     // the corresponding optimal value
+    uint16_t meta;   // m, k, slot packed in 12 bits (+4 spare)
+    uint8_t  reward; // 0-200 inclusive
 };
+#pragma pack(pop)
+
+static_assert(sizeof(OPT) == 3, "OPT3 must be exactly 3 bytes");
 
 struct OPT_PATH {
     int required_T = -1;

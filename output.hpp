@@ -79,7 +79,7 @@ void print_to_file(const std::string &filename, const std::vector<std::vector<st
     fclose(fp);
 }
 
-void result_to_csv(const std::filesystem::path& filename, const std::string& flag, std::string tc_num, int _lambda, float reward, double time, long long table_size) {
+void result_to_csv(const std::filesystem::path& filename, const std::string& flag, const std::string& tc_num, int _lambda, float reward, double time, long long table_size) {
     FILE *fp = fopen(filename.string().c_str(), "a");
     if (!fp) {
         fprintf(stderr, "Error: cannot open file %s\n", filename.string().c_str());
@@ -113,10 +113,10 @@ std::vector<std::vector<std::variant<int, float>>> trace_solution(OPT *opt, int 
 
     for (int n = num_user; n >= 1; n--) {
         auto index = get_idx(n, curr_t, curr_combo, flag);
-        auto sol = opt[index].solution;
+        auto sol = opt[index].meta;
         auto reward = opt[index].reward;
-        auto slot_opt = opt[index].slot;
-        auto [m_opt, k_opt] = demux_solution(sol);
+        uint8_t m_opt, k_opt, slot_opt;
+        unpack_meta(sol, m_opt, k_opt, slot_opt);
         solution.at(n - 1) = std::vector<std::variant<int, float>>{n, m_opt, k_opt, slot_opt, reward};
         if (m_opt == 0) {
             continue;

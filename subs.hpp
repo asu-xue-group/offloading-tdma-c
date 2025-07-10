@@ -66,37 +66,24 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     }
 }
 
-unsigned char mux_solution(int server, int tier) {
-    if (server > 55) {
-        std::cerr << "Server number is " << server << " out of max 55" << std::endl;
-    }
-    if (tier > 2) {
-        std::cerr << "Tier number is " << tier << " out of max 2" << std::endl;
-    }
-    return tier * 100 + server;
+// ---------- packing ----------
+inline uint16_t pack_meta(uint8_t m, uint8_t k, uint8_t slot)
+{
+    return   (m    & 0x0F)           |        // bits 0-3
+            ((k    & 0x03) << 4 )    |        // bits 4-5
+            ((slot & 0x3F) << 6 );            // bits 6-11
+            /* bits 12-15 left 0 (reserved) */
 }
 
-std::tuple<int, int> demux_solution(unsigned char solution) {
-    int tier = solution / 100;
-    int server = solution % 100;
-    return {server, tier};
+// ---------- unpacking ----------
+inline void unpack_meta(uint16_t meta,
+                        uint8_t& m, uint8_t& k, uint8_t& slot)
+{
+    m    =  meta        & 0x0F;
+    k    = (meta >> 4)  & 0x03;
+    slot = (meta >> 6)  & 0x3F;
 }
-//
-//unsigned short mux_solution2(int reward, int slot) {
-//    if (reward > 655) {
-//        std::cerr << "Reward number is " << reward << " out of max 655" << std::endl;
-//    }
-//    if (slot > 35) {
-//        std::cerr << "Slot number is " << slot << " out of max 35" << std::endl;
-//    }
-//    return reward * 100 + slot;
-//}
-//
-//std::tuple<int, int> demux_solution2(unsigned short solution) {
-//    int reward = solution / 100;
-//    int slot = solution % 100;
-//    return {reward, slot};
-//}
+
 
 long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
     int C[M + L + 1];

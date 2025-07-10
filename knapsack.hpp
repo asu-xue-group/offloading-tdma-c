@@ -40,8 +40,8 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 }
 
 
-std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
-    auto val = 0.0f;
+std::tuple<int, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
+    auto val = 0;
     if (n > 1) {
         val = opt[get_idx(n - 1, t, combo, mode)].reward;
     }
@@ -58,7 +58,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
     for (int m = 0; m <= M + L; m++) {
         // Iterate over offloading tiers
         for (int k = 1; k <= K; k++) {
-            auto prev_opt = 0.0f;
+            auto prev_opt = 0;
             auto required_T = 0;
             // Local processing
             if (m == 0) {
@@ -88,7 +88,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 }
             }
 
-            auto reward = static_cast<float>(u[n].tier[k].reward) + prev_opt;
+            auto reward = u[n].tier[k].reward + prev_opt;
 
             if (reward > val) {
                 val = reward;
@@ -141,9 +141,8 @@ void dp(int mode) {
 //                    exit(1);
                 }
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
-                auto solution = mux_solution(m_opt, k_opt);
-                opt[next_idx].solution = solution;
-                opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
+                auto solution = pack_meta(m_opt, k_opt, slot_opt);
+                opt[next_idx].meta = solution;
                 opt[next_idx].reward = reward;
             }
         }
