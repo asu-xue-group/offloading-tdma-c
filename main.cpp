@@ -187,6 +187,11 @@ int main(int argc, char **argv) {
                     }
                     if (!s[m].relay) {
                         auto X_ub = graph.update_timeslot(u[n].data, time);
+                        if (X_ub <= 0) {
+                            opt_path.at(n).at(m).push_back(path);
+                            continue;
+                        }
+
                         auto result = graph.shortest_path(u[n].name, s[m].name);
                         if (result == std::nullopt) {
                             opt_path.at(n).at(m).push_back(path);
