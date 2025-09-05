@@ -6,15 +6,17 @@
 
 
 struct SERVER {
+    bool cpu_scaled;          // whether the CPU is scaled
+    bool ram_scaled;          // whether the RAM is scaled
+    bool relay;             // whether this is a relay
     int index;                // index of the server, starting from 1...
-    float x;                    // x coordinate of the server
-    float y;                    // y coordinate of the server
     int cpu;                  // number of CPU cores
     int cpu_orig;             // original number of CPU cores (before scaling)
     int ram;                  // size of memory
     int ram_orig;             // original size of memory (before scaling)
-    bool cpu_scaled;          // whether the CPU is scaled
-    bool ram_scaled;          // whether the RAM is scaled
+    float x;                    // x coordinate of the server
+    float y;                    // y coordinate of the server
+    std::string name;       // name of the server
 };
 
 
@@ -22,8 +24,8 @@ struct TIER {
     int tier;       // tier in {1, 2}. This may not be needed, but we will keep it.
     int cpu;        // cpu requirement
     int ram;        // ram requirement
-    float time;       // execution time
     int reward;     // corresponding reward
+    float time;       // execution time
 };
 
 struct USER {
@@ -34,6 +36,7 @@ struct USER {
     float y;          // y coordinate of the user
     float ddl;        // deadline
     float data;       // data size, in MB
+    std::string name; // name of the user
     TIER tier[3];    // task requirement and reward: tier[1] and tier[2], wasting tier[0]...
 };
 
