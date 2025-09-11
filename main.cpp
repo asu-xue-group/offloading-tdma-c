@@ -150,6 +150,11 @@ int main(int argc, char **argv) {
         u[n].tier[2].reward = j["users"][n - 1]["tiers"][1]["reward"];
         u[n].tier[2].time = j["users"][n - 1]["tiers"][1]["time"];
 
+        u->fail_prob.push_back(-1);
+        for (int m = 1; m <= M; m++) {
+            u[n].fail_prob.push_back(j["users"][n - 1]["failure_chance"][m - 1]);
+        }
+
         u[n].name = std::format("u_{}", n);
         graph.add_node(&u[n]);
     }

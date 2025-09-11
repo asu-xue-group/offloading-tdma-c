@@ -38,6 +38,7 @@ struct USER {
     float ddl;        // deadline
     float data;       // data size, in MB
     std::string name; // name of the user
+    std::vector<float> fail_prob;  // failure probability
     TIER tier[3];    // task requirement and reward: tier[1] and tier[2], wasting tier[0]...
 };
 

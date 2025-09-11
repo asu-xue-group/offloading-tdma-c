@@ -88,7 +88,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                 }
             }
 
-            auto reward = static_cast<float>(u[n].tier[k].reward) + prev_opt;
+            auto reward = static_cast<float>(u[n].tier[k].reward) * (1 - u[n].fail_prob[m]) + prev_opt;
 
             if (reward > val) {
                 val = reward;
