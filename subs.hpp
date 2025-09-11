@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <tuple>
+#include <ostream>
 #include "global.h"
 #include "structs.h"
 
@@ -13,7 +14,7 @@ extern USER *u;
 extern std::vector<std::vector<double>> s_distance, ur_distance, rs_distance;
 extern int K, M, N, L;
 
-long long indexue(int n, int t, const int *C, const int *R) {
+inline long long indexue(int n, int t, const int *C, const int *R) {
     long long temp = 0;
     long long multiplier = (1 + T);
 
@@ -37,15 +38,15 @@ long long indexue(int n, int t, const int *C, const int *R) {
     return temp;
 }
 
-double calc_distance(float x1, float y1, float x2, float y2) {
+inline double calc_distance(float x1, float y1, float x2, float y2) {
     return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
 }
 
-double calc_snr(double distance) {
+inline double calc_snr(double distance) {
     return Pmax / (noise * std::pow(distance, alpha));
 }
 
-void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
+inline void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     if (!s[m].cpu_scaled) {
         combo[2 * m - 1] -= u[n].tier[k].cpu;
     } else {
@@ -66,21 +67,21 @@ void update_combo(std::vector<int> &combo, int n, int m, int k, int mode) {
     }
 }
 
-unsigned char mux_solution(int server, int tier) {
-    if (server > 55) {
-        std::cerr << "Server number is " << server << " out of max 55" << std::endl;
-    }
-    if (tier > 2) {
-        std::cerr << "Tier number is " << tier << " out of max 2" << std::endl;
-    }
-    return tier * 100 + server;
-}
-
-std::tuple<int, int> demux_solution(unsigned char solution) {
-    int tier = solution / 100;
-    int server = solution % 100;
-    return {server, tier};
-}
+// unsigned char mux_solution(int server, int tier) {
+//     if (server > 55) {
+//         std::cerr << "Server number is " << server << " out of max 55" << std::endl;
+//     }
+//     if (tier > 2) {
+//         std::cerr << "Tier number is " << tier << " out of max 2" << std::endl;
+//     }
+//     return tier * 100 + server;
+// }
+//
+// std::tuple<int, int> demux_solution(unsigned char solution) {
+//     int tier = solution / 100;
+//     int server = solution % 100;
+//     return {server, tier};
+// }
 //
 //unsigned short mux_solution2(int reward, int slot) {
 //    if (reward > 655) {
@@ -98,7 +99,7 @@ std::tuple<int, int> demux_solution(unsigned char solution) {
 //    return {reward, slot};
 //}
 
-long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
+inline long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
     int C[M + L + 1];
     int R[M + L + 1];
 
@@ -111,7 +112,7 @@ long long get_idx(int n, int t, const std::vector<int> &combo, int mode) {
 }
 
 // Exponential decay function
-double calc_reward(int n, int k, double delay) {
+inline double calc_reward(int n, int k, double delay) {
     return u[n].tier[k].reward * std::pow(M_E, -decay * delay);
 }
 

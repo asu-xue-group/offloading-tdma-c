@@ -177,34 +177,38 @@ int main(int argc, char **argv) {
             for (int k = 0; k <= K; k++) {
                 auto *path = new OPT_PATH;
                 if (k == 0) {
-                    opt_path.at(n).at(m).push_back(path);
-                    continue;
+                    opt_path.at(n).at(m).push_back(std::move(path));
                 } else {
                     float time = u[n].ddl - u[n].tier[k].time;
                     if (time <= 0) {
-                        opt_path.at(n).at(m).push_back(path);
+                        opt_path.at(n).at(m).push_back(std::move(path));
                         continue;
                     }
                     if (!s[m].relay) {
                         auto X_ub = graph.update_timeslot(u[n].data, time);
+                        if (X_ub <= 0) {
+                            opt_path.at(n).at(m).push_back(std::move(path));
+                            continue;
+                        }
+
                         auto result = graph.shortest_path(u[n].name, s[m].name);
                         if (result == std::nullopt) {
-                            opt_path.at(n).at(m).push_back(path);
+                            opt_path.at(n).at(m).push_back(std::move(path));
                             continue;
                         }
                         std::tie(path->path, path->timeslots, path->required_T) = result.value();
                         path->X_n = X_ub;
-                        opt_path.at(n).at(m).push_back(path);
+                        opt_path.at(n).at(m).push_back(std::move(path));
                     } else {
                         auto e = graph.is_connected(u[n].name, s[m].name);
                         if (!e) {
-                            opt_path.at(n).at(m).push_back(path);
+                            opt_path.at(n).at(m).push_back(std::move(path));
                             continue;
                         }
                         auto X_ub = std::floor(time / (T * z));
                         path->required_T = std::ceil(u[n].data / (X_ub * z * bandwidth * log2(1 + e.value().snr)));
                         path->X_n = static_cast<int>(X_ub);
-                        opt_path.at(n).at(m).push_back(path);
+                        opt_path.at(n).at(m).push_back(std::move(path));
                     }
                 }
             }

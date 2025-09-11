@@ -18,7 +18,7 @@ extern long long table_size;
 extern Graph graph;
 extern std::vector<std::vector<std::vector<OPT_PATH *>>> opt_path;
 
-void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
+inline void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> stack,
                        std::vector<std::vector<int>> sequences, int index) {
     std::vector<int> sequence = sequences[index];
     for (int i: sequence) {
@@ -31,7 +31,7 @@ void cartesian_recurse(std::vector<std::vector<int>> &accum, std::vector<int> st
     }
 }
 
-std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<int>> &sequences) {
+inline std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<int>> &sequences) {
     std::vector<std::vector<int>> accum;
     std::vector<int> stack;
     if (!sequences.empty())
@@ -43,7 +43,7 @@ std::vector<std::vector<int>> cartesian_product(const std::vector<std::vector<in
 std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &combo, int mode) {
     auto val = 0.0f;
     if (n > 1) {
-        val = opt[get_idx(n - 1, t, combo, mode)].reward;
+        val = get_reward(opt[get_idx(n - 1, t, combo, mode)]);
     }
     int m_opt = 0;
     int k_opt = 0;
@@ -66,7 +66,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                     continue;
                 }
                 if (n > 1) {
-                    prev_opt = opt[get_idx(n - 1, t, combo, mode)].reward;
+                    prev_opt = get_reward(opt[get_idx(n - 1, t, combo, mode)]);
                 }
             } else {
                 auto res = opt_path.at(n).at(m).at(k);
@@ -84,7 +84,7 @@ std::tuple<float, int, int, int> calc_opt(int n, int t, const std::vector<int> &
                     continue;
                 }
                 if (n > 1) {
-                    prev_opt = opt[get_idx(n - 1, new_t, new_combo, mode)].reward;
+                    prev_opt = get_reward(opt[get_idx(n - 1, new_t, new_combo, mode)]);
                 }
             }
 
@@ -141,10 +141,8 @@ void dp(int mode) {
 //                    exit(1);
                 }
                 auto [reward, m_opt, k_opt, slot_opt] = calc_opt(n, t, cc, mode);
-                auto solution = mux_solution(m_opt, k_opt);
-                opt[next_idx].solution = solution;
-                opt[next_idx].slot = static_cast<unsigned char>(slot_opt);
-                opt[next_idx].reward = reward;
+                auto solution = pack_opt(m_opt, k_opt, slot_opt, reward);
+                opt[next_idx] = solution;
             }
         }
 
