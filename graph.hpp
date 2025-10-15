@@ -187,7 +187,7 @@ public:
     int update_timeslot(const float data, const float time, const double snr_lin) {
         // X_ub is the maximum # of timeslots this transmission can use given the available time
         auto X_ub = std::floor(time / (T * z));
-        auto data_bits = data * 1024 * 1024 * 8;
+        auto data_bits = data * 8e6;
         auto Rbps = std::max(1e-6, bandwidth * 1e6 * log2(1.0 + std::max(snr_lin, 1e-12)));
         auto tau_up = data_bits / Rbps;
 
