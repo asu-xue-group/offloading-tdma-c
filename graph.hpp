@@ -184,14 +184,17 @@ public:
     }
 
     // Here we assume that the transmission over multihop occurs simultaneously
-    int update_timeslot(const float data, const float time) {
+    int update_timeslot(const float data, const float time, const double snr_lin) {
         // X_ub is the maximum # of timeslots this transmission can use given the available time
         auto X_ub = std::floor(time / (T * z));
+        auto data_bits = data * 1024 * 1024 * 8;
+        auto Rbps = std::max(1e-6, bandwidth * 1e6 * log2(1.0 + std::max(snr_lin, 1e-12)));
+        auto tau_up = data_bits / Rbps;
 
         // Each edge has a weight (timeslot) corresponding to the X_ub
         for (auto &source: adj_list) {
             for (auto &dest : source) {
-                dest.timeslot = std::ceil(data / (X_ub * z * bandwidth * log2(1 + dest.snr)));
+                dest.timeslot = std::ceil(tau_up / (X_ub * z));
             }
         }
 
